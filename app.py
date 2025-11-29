@@ -187,44 +187,28 @@ def send_email_code(to_email: str, code: str, employee_name: str) -> None:
 # =====================
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    data = request.get_json(silent=True) or {}
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
 
-    email_raw = (data.get("email") or "")
-    password_raw = (data.get("password") or "")
-
-    email = email_raw.strip().lower()
-    password = password_raw.strip()
-
-    logger.info("Login attempt: email=%r password_len=%d", email, len(password))
-
-    emp = None
-    for k, v in EMPLOYEES.items():
-        if k.lower() == email:
-            emp = v
-            break
-
+    emp = EMPLOYEES.get(email)
     if not emp or emp.get("password") != password:
-        logger.warning("Failed login attempt for email=%r", email)
+        logger.warning("Failed login attempt for email=%s", email)
         return jsonify(ok=False, message="بريد أو كلمة مرور غير صحيحة."), 401
 
+    # 🔥 هنا الدخول المباشر بدون SMTP ولا كود تحقق
     session.permanent = True
+    session["logged_in"] = True
+    session["user_email"] = email
+    session["user_name"] = emp["name"]
 
-    trusted_email = request.cookies.get("trusted_device_email")
-    if trusted_email and trusted_email.lower() == email:
-        session["logged_in"] = True
-        session["user_email"] = email
-        session["user_name"] = emp["name"]
+    logger.info("Direct login (no SMTP) for %s", email)
 
-        session.pop("pending_email", None)
-        session.pop("pending_name", None)
-        session.pop("pending_code", None)
-
-        logger.info("Trusted-device login for %s", email)
-        return jsonify(
-            ok=True,
-            skip_code=True,
-            name=emp["name"],
-        )
+    return jsonify(
+        ok=True,
+        skip_code=True,   # عشان الواجهة تعرف إن ما فيه خطوة كود
+        name=emp["name"],
+    )
 
     code = generate_code()
     session["pending_email"] = email
@@ -298,3 +282,4 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
