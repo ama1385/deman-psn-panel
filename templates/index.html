@@ -1,2617 +1,794 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>DEMAN Panel – منظومة استرجاع الحسابات</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- خط Tajawal -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  >
-
-  <style>
-    :root {
-      --bg-main: #020617;
-      --bg-main-light: #e5edff;
-      --bg-card-dark: #020617;
-      --bg-card-light: #f8fafc;
-      --border-soft-dark: rgba(51,65,85,0.9);
-      --border-soft-light: rgba(148,163,184,0.9);
-      --primary: #3b82f6;
-      --primary-2: #6366f1;
-      --accent: #22d3ee;
-      --accent-soft: rgba(34,211,238,0.25);
-      --text-main-dark: #e5e7eb;
-      --text-main-light: #0f172a;
-      --muted-dark: #9ca3af;
-      --muted-light: #6b7280;
-      --radius-lg: 22px;
-      --radius-md: 14px;
-      --shadow-soft-dark: 0 28px 80px rgba(15,23,42,0.95);
-      --shadow-soft-light: 0 18px 50px rgba(148,163,184,0.35);
-      --transition: 0.25s ease;
-    }
-
-    * {
-      box-sizing: border-box;
-      font-family: "Tajawal", system-ui, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: stretch;
-      justify-content: center;
-      background:
-        radial-gradient(circle at 10% -10%, #1d4ed8 0, transparent 55%),
-        radial-gradient(circle at 90% 110%, #0ea5e9 0, transparent 55%),
-        var(--bg-main);
-      color: var(--text-main-dark);
-      overflow-x: hidden;
-      transition: background var(--transition), color var(--transition);
-    }
-
-    body.light {
-      background:
-        radial-gradient(circle at 10% -10%, #c7d2fe 0, transparent 55%),
-        radial-gradient(circle at 90% 110%, #bae6fd 0, transparent 55%),
-        var(--bg-main-light);
-      color: var(--text-main-light);
-    }
-
-    .ps-bg {
-      position: fixed;
-      inset: -80px;
-      overflow: hidden;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .ps-shape {
-      position: absolute;
-      font-size: 90px;
-      font-weight: 600;
-      color: rgba(148,163,184,0.18);
-      text-shadow: 0 0 40px rgba(15,23,42,0.9);
-      filter: blur(0.3px);
-      animation-duration: 24s;
-      animation-iteration-count: infinite;
-      animation-timing-function: ease-in-out;
-      animation-direction: alternate;
-    }
-
-    .ps-triangle {
-      top: 8%;
-      right: 12%;
-      animation-name: float1;
-      color: rgba(94,234,212,0.25);
-    }
-
-    .ps-square {
-      bottom: 10%;
-      left: 15%;
-      animation-name: float2;
-      color: rgba(129,140,248,0.30);
-    }
-
-    .ps-cross {
-      top: 20%;
-      left: 5%;
-      animation-name: float3;
-      color: rgba(248,113,113,0.25);
-    }
-
-    .ps-circle {
-      bottom: 6%;
-      right: 20%;
-      animation-name: float4;
-      color: rgba(56,189,248,0.30);
-    }
-
-    @keyframes float1 {
-      0% { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
-      50% { transform: translate3d(12px, -25px,0) rotate(10deg) scale(1.08); }
-      100% { transform: translate3d(-18px, 10px,0) rotate(-8deg) scale(1.02); }
-    }
-
-    @keyframes float2 {
-      0% { transform: translate3d(0,0,0) rotate(12deg) scale(1); }
-      50% { transform: translate3d(-25px, 25px,0) rotate(0deg) scale(1.12); }
-      100% { transform: translate3d(15px,-15px,0) rotate(-10deg) scale(1.04); }
-    }
-
-    @keyframes float3 {
-      0% { transform: translate3d(0,0,0) rotate(-12deg) scale(0.9); }
-      50% { transform: translate3d(20px,20px,0) rotate(5deg) scale(1.05); }
-      100% { transform: translate3d(-10px,-15px,0) rotate(15deg) scale(1); }
-    }
-
-    @keyframes float4 {
-      0% { transform: translate3d(0,0,0) scale(1); }
-      50% { transform: translate3d(-15px,-25px,0) scale(1.12); }
-      100% { transform: translate3d(20px,10px,0) scale(1.02); }
-    }
-
-    .hidden { display: none !important; }
-
-    .auth-wrapper {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 480px;
-      margin: auto;
-      padding: 40px 16px 20px;
-    }
-
-    .logo-pill {
-      width: 64px;
-      height: 64px;
-      border-radius: 20px;
-      background:
-        radial-gradient(circle at 30% 20%, #22d3ee, transparent 55%),
-        radial-gradient(circle at 70% 80%, #3b82f6, transparent 55%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 18px 40px rgba(15,23,42,0.9);
-      margin: 0 auto 12px;
-      border: 1px solid rgba(148,163,184,0.6);
-      font-weight: 700;
-      color: #e5e7eb;
-      font-size: 1.1rem;
-    }
-
-    body.light .logo-pill {
-      box-shadow: 0 14px 35px rgba(129,140,248,0.75);
-    }
-
-    .auth-card {
-      background:
-        radial-gradient(circle at top left, rgba(37,99,235,0.24), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(56,189,248,0.28), transparent 55%),
-        var(--bg-card-dark);
-      border-radius: 24px;
-      padding: 22px 20px 18px;
-      box-shadow: var(--shadow-soft-dark);
-      border: 1px solid var(--border-soft-dark);
-      position: relative;
-      overflow: hidden;
-    }
-
-    body.light .auth-card {
-      background:
-        radial-gradient(circle at top left, rgba(37,99,235,0.15), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(56,189,248,0.18), transparent 55%),
-        var(--bg-card-light);
-      border-color: var(--border-soft-light);
-      box-shadow: var(--shadow-soft-light);
-    }
-
-    .auth-card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background:
-        radial-gradient(circle at 0 0, rgba(59,130,246,0.35), transparent 55%),
-        radial-gradient(circle at 100% 100%, rgba(14,165,233,0.4), transparent 55%);
-      opacity: 0.15;
-      pointer-events: none;
-    }
-
-    .auth-header {
-      text-align: center;
-      margin-bottom: 14px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .auth-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .auth-sub {
-      font-size: 0.86rem;
-      color: var(--muted-dark);
-    }
-
-    body.light .auth-sub {
-      color: var(--muted-light);
-    }
-
-    .auth-sub strong {
-      color: #e5e7eb;
-    }
-
-    body.light .auth-sub strong {
-      color: #0f172a;
-    }
-
-    .form-group {
-      position: relative;
-      margin-bottom: 12px;
-      font-size: 0.82rem;
-      text-align: right;
-      z-index: 1;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--muted-dark);
-    }
-
-    body.light label {
-      color: var(--muted-light);
-    }
-
-    input[type="email"],
-    input[type="password"],
-    input[type="text"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      padding: 9px 11px;
-      border-radius: 12px;
-      border: 1px solid rgba(71,85,105,0.95);
-      background: rgba(15,23,42,0.96);
-      color: var(--text-main-dark);
-      font-size: 0.9rem;
-      outline: none;
-      transition:
-        border var(--transition),
-        box-shadow var(--transition),
-        background var(--transition),
-        transform 0.08s ease,
-        color var(--transition);
-    }
-
-    body.light input,
-    body.light textarea,
-    body.light select {
-      background: #f9fafb;
-      color: var(--text-main-light);
-      border-color: rgba(148,163,184,0.9);
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(34,211,238,0.45);
-      transform: translateY(-1px);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 70px;
-    }
-
-    .password-wrapper {
-      position: relative;
-    }
-
-    .toggle-password {
-      position: absolute;
-      top: 50%;
-      left: 8px;
-      transform: translateY(-50%);
-      font-size: 0.75rem;
-      padding: 3px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(71,85,105,0.9);
-      background: rgba(15,23,42,0.96);
-      color: var(--muted-dark);
-      cursor: pointer;
-      transition:
-        background var(--transition),
-        color var(--transition),
-        border var(--transition),
-        transform 0.08s ease;
-    }
-
-    .toggle-password:hover {
-      background: rgba(15,23,42,1);
-      color: #e5e7eb;
-      border-color: rgba(148,163,184,0.95);
-    }
-
-    body.light .toggle-password {
-      background: #f9fafb;
-      border-color: rgba(148,163,184,0.9);
-      color: var(--muted-light);
-    }
-
-    body.light .toggle-password:hover {
-      background: #e5edff;
-      color: var(--text-main-light);
-    }
-
-    .btn {
-      border-radius: 999px;
-      border: none;
-      padding: 9px 16px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition:
-        background var(--transition),
-        box-shadow var(--transition),
-        transform 0.08s ease,
-        color var(--transition);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .btn-primary {
-      width: 100%;
-      background: linear-gradient(135deg, var(--primary), var(--primary-2));
-      color: white;
-      box-shadow: 0 18px 40px rgba(37,99,235,0.9);
-      margin-top: 4px;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 22px 55px rgba(37,99,235,1);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted-dark);
-    }
-
-    body.light .btn-ghost {
-      color: var(--muted-light);
-    }
-
-    .btn-ghost:hover {
-      color: #e5e7eb;
-    }
-
-    body.light .btn-ghost:hover {
-      color: var(--text-main-light);
-    }
-
-    .auth-footer {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: var(--muted-dark);
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    body.light .auth-footer {
-      color: var(--muted-light);
-    }
-
-    .pill-text {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(55,65,81,0.9);
-      background: rgba(15,23,42,0.96);
-      font-size: 0.78rem;
-      color: var(--muted-dark);
-      gap: 4px;
-      margin-top: 6px;
-    }
-
-    .pill-text strong {
-      color: #e5e7eb;
-      font-weight: 600;
-    }
-
-    body.light .pill-text {
-      background: rgba(248,250,252,0.96);
-      border-color: rgba(148,163,184,0.9);
-      color: var(--muted-light);
-    }
-
-    body.light .pill-text strong {
-      color: var(--text-main-light);
-    }
-
-    .contact-bar {
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: var(--muted-dark);
-      text-align: center;
-    }
-
-    body.light .contact-bar {
-      color: var(--muted-light);
-    }
-
-    .contact-links {
-      margin-top: 6px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    .contact-icon {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(71,85,105,0.9);
-      background: rgba(15,23,42,0.95);
-      color: #e5e7eb;
-      font-size: 0.78rem;
-      text-decoration: none;
-    }
-
-    .contact-icon span.icon-circle {
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      background: rgba(37,99,235,0.9);
-    }
-
-    body.light .contact-icon {
-      background: #f9fafb;
-      border-color: rgba(148,163,184,0.9);
-      color: #0f172a;
-    }
-
-    .view { display: none; }
-    .view.active { display: block; }
-
-    /* Dashboard shell */
-    #dashboard {
-      position: relative;
-      z-index: 1;
-      max-width: 1160px;
-      margin: 16px auto 26px;
-      padding: 0 10px 30px;
-      display: none;
-    }
-
-    #dashboard.active { display: block; }
-
-    .app-shell {
-      border-radius: 24px;
-      background: rgba(15,23,42,0.96);
-      border: 1px solid rgba(51,65,85,0.95);
-      box-shadow: var(--shadow-soft-dark);
-      overflow: hidden;
-      backdrop-filter: blur(18px);
-    }
-
-    body.light .app-shell {
-      background: rgba(248,250,252,0.96);
-      border-color: rgba(148,163,184,0.9);
-      box-shadow: var(--shadow-soft-light);
-    }
-
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      border-bottom: 1px solid rgba(51,65,85,0.9);
-      background: linear-gradient(to left, rgba(15,23,42,1), rgba(15,23,42,0.85));
-    }
-
-    body.light .app-header {
-      background: linear-gradient(to left, #e5edff, #f9fafb);
-      border-color: rgba(148,163,184,0.8);
-    }
-
-    .app-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: rgba(56,189,248,0.15);
-      color: #e0f2fe;
-      border: 1px solid rgba(56,189,248,0.4);
-    }
-
-    body.light .badge {
-      background: rgba(37,99,235,0.08);
-      color: #1d4ed8;
-      border-color: rgba(59,130,246,0.4);
-    }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
-
-    .icon-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      border: 1px solid rgba(71,85,105,0.95);
-      background: rgba(15,23,42,0.96);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition:
-        background var(--transition),
-        transform 0.08s ease,
-        border var(--transition),
-        color var(--transition);
-      color: #e5e7eb;
-      flex-shrink: 0;
-    }
-
-    .icon-btn:active {
-      transform: scale(0.96);
-    }
-
-    body.light .icon-btn {
-      background: #f8fafc;
-      border-color: rgba(148,163,184,0.9);
-      color: #0f172a;
-    }
-
-    .profile-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding-inline: 10px;
-      max-width: 180px;
-    }
-
-    .avatar {
-      width: 26px;
-      height: 26px;
-      border-radius: 999px;
-      background:
-        radial-gradient(circle at 20% 20%, #22d3ee, transparent 55%),
-        radial-gradient(circle at 80% 80%, #6366f1, transparent 55%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      color: #e5e7eb;
-      font-weight: 600;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .profile-name {
-      font-size: 0.8rem;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .profile-menu {
-      position: absolute;
-      top: 54px;
-      left: 18px;
-      width: 240px;
-      background: rgba(15,23,42,0.98);
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(51,65,85,0.95);
-      box-shadow: 0 20px 55px rgba(15,23,42,0.9);
-      padding: 8px;
-      font-size: 0.84rem;
-      display: none;
-      z-index: 50;
-    }
-
-    body.light .profile-menu {
-      background: #f9fafb;
-      border-color: rgba(148,163,184,0.9);
-      box-shadow: var(--shadow-soft-light);
-    }
-
-    .profile-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 6px 8px;
-    }
-
-    .profile-row-main-text {
-      font-size: 0.78rem;
-      opacity: 0.85;
-    }
-
-    .profile-item {
-      padding: 6px 8px;
-      border-radius: 9px;
-      cursor: pointer;
-      margin-bottom: 4px;
-      transition:
-        background var(--transition),
-        color var(--transition);
-    }
-
-    .profile-item:hover {
-      background: rgba(30,64,175,0.9);
-      color: #e5e7eb;
-    }
-
-    body.light .profile-item:hover {
-      background: rgba(191,219,254,0.95);
-      color: #0f172a;
-    }
-
-    .side-menu {
-      position: fixed;
-      top: 0;
-      right: -260px;
-      width: 260px;
-      height: 100vh;
-      background: rgba(15,23,42,0.98);
-      color: #e5e7eb;
-      box-shadow: -14px 0 30px rgba(15,23,42,0.9);
-      padding: 16px 14px;
-      display: flex;
-      flex-direction: column;
-      z-index: 60;
-      transition: right var(--transition);
-    }
-
-    .side-menu.open {
-      right: 0;
-    }
-
-    .side-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .side-item {
-      padding: 8px 9px;
-      border-radius: 10px;
-      font-size: 0.88rem;
-      cursor: pointer;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition:
-        background var(--transition),
-        transform 0.08s ease;
-    }
-
-    .side-item-main {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .side-icon {
-      width: 18px;
-      height: 18px;
-      border-radius: 5px;
-      background: rgba(37,99,235,0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-    }
-
-    .side-item:hover {
-      background: rgba(30,64,175,0.95);
-      transform: translateX(-2px);
-    }
-
-    .side-footer {
-      margin-top: auto;
-      padding-top: 10px;
-      border-top: 1px solid rgba(51,65,85,0.9);
-      font-size: 0.8rem;
-    }
-
-    .theme-toggle {
-      width: 100%;
-      padding: 7px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(75,85,99,0.95);
-      background: rgba(15,23,42,0.9);
-      color: #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    body.light .theme-toggle {
-      background: #f9fafb;
-      color: #0f172a;
-      border-color: rgba(148,163,184,0.9);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      padding: 10px 16px 0;
-      border-bottom: 1px solid rgba(51,65,85,0.9);
-      background: rgba(15,23,42,0.96);
-      overflow-x: auto;
-    }
-
-    body.light .tabs {
-      background: rgba(248,250,252,0.96);
-      border-color: rgba(148,163,184,0.8);
-    }
-
-    .tab {
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      cursor: pointer;
-      border: 1px solid transparent;
-      color: #9ca3af;
-      white-space: nowrap;
-    }
-
-    body.light .tab {
-      color: #6b7280;
-    }
-
-    .tab.active {
-      background: var(--accent-soft);
-      border-color: rgba(56,189,248,0.8);
-      color: #e0f2fe;
-    }
-
-    body.light .tab.active {
-      background: rgba(37,99,235,0.16);
-      border-color: rgba(37,99,235,0.8);
-      color: #1d4ed8;
-    }
-
-    .app-body {
-      padding: 10px 16px 18px;
-      background:
-        radial-gradient(circle at top left, rgba(15,23,42,0.9), rgba(15,23,42,0.98));
-    }
-
-    body.light .app-body {
-      background: linear-gradient(to bottom, #f9fafb, #e5edff);
-    }
-
-    .view-panel { display: none; }
-    .view-panel.active { display: block; }
-
-    .search-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .search-input {
-      flex: 1;
-      min-width: 220px;
-      padding: 9px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(71,85,105,0.9);
-      background: rgba(15,23,42,0.96);
-      color: var(--text-main-dark);
-      font-size: 0.9rem;
-      outline: none;
-      transition:
-        border var(--transition),
-        box-shadow var(--transition),
-        background var(--transition),
-        color var(--transition);
-    }
-
-    body.light .search-input {
-      background: #f9fafb;
-      color: var(--text-main-light);
-      border-color: rgba(148,163,184,0.9);
-    }
-
-    .search-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(34,211,238,0.4);
-    }
-
-    .btn-add {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #fff;
-      padding-inline: 14px;
-      box-shadow: 0 14px 30px rgba(22,163,74,0.6);
-      border-radius: 999px;
-      font-size: 0.85rem;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .info-chip {
-      font-size: 0.78rem;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(148,163,184,0.17);
-      color: #cbd5f5;
-    }
-
-    body.light .info-chip {
-      background: rgba(148,163,184,0.25);
-      color: #374151;
-    }
-
-    .grid-main {
-      display: grid;
-      grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1fr);
-      gap: 14px;
-      margin-top: 8px;
-    }
-
-    @media (max-width: 860px) {
-      .grid-main {
-        grid-template-columns: minmax(0,1fr);
-      }
-    }
-
-    .card {
-      background: rgba(15,23,42,0.96);
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(51,65,85,0.95);
-      padding: 10px 10px 8px;
-      font-size: 0.85rem;
-      box-shadow: 0 18px 45px rgba(15,23,42,0.9);
-    }
-
-    body.light .card {
-      background: rgba(248,250,252,0.96);
-      border-color: rgba(148,163,184,0.9);
-      box-shadow: var(--shadow-soft-light);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
-
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-
-    .card-sub {
-      font-size: 0.78rem;
-      opacity: 0.78;
-    }
-
-    .list {
-      max-height: 340px;
-      overflow: auto;
-      padding-inline-end: 2px;
-    }
-
-    .list-item {
-      border-radius: 10px;
-      border: 1px solid rgba(71,85,105,0.9);
-      padding: 7px 8px;
-      margin-bottom: 5px;
-      cursor: pointer;
-      transition:
-        background var(--transition),
-        border var(--transition),
-        transform 0.08s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .list-item:hover {
-      background: rgba(59,130,246,0.12);
-      border-color: rgba(59,130,246,0.9);
-      transform: translateY(-1px);
-    }
-
-    body.light .list-item {
-      border-color: rgba(148,163,184,0.9);
-    }
-
-    body.light .list-item:hover {
-      background: rgba(191,219,254,0.7);
-    }
-
-    .list-row-main {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.86rem;
-    }
-
-    .list-id {
-      font-weight: 600;
-    }
-
-    .status-chip {
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: rgba(22,163,74,0.18);
-      color: #bbf7d0;
-    }
-
-    .status-pending {
-      background: rgba(234,179,8,0.2);
-      color: #fef3c7;
-    }
-
-    .status-rejected {
-      background: rgba(239,68,68,0.2);
-      color: #fecaca;
-    }
-
-    body.light .status-chip {
-      background: rgba(22,163,74,0.12);
-      color: #166534;
-    }
-
-    body.light .status-pending {
-      background: rgba(250,204,21,0.18);
-      color: #854d0e;
-    }
-
-    body.light .status-rejected {
-      background: rgba(248,113,113,0.2);
-      color: #b91c1c;
-    }
-
-    .meta-row {
-      font-size: 0.76rem;
-      opacity: 0.82;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .recent-list {
-      max-height: 340px;
-      overflow: auto;
-      padding-inline-end: 2px;
-    }
-
-    .recent-item {
-      border-radius: 10px;
-      border: 1px dashed rgba(71,85,105,0.9);
-      padding: 6px 7px;
-      margin-bottom: 4px;
-      font-size: 0.78rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      cursor: pointer;
-      transition:
-        background var(--transition),
-        transform 0.08s ease;
-    }
-
-    .recent-item:hover {
-      background: rgba(59,130,246,0.15);
-      transform: translateY(-1px);
-    }
-
-    body.light .recent-item {
-      border-color: rgba(148,163,184,0.9);
-    }
-
-    .recent-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .pill {
-      font-size: 0.7rem;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: rgba(148,163,184,0.25);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 6px;
-    }
-
-    th, td {
-      text-align: right;
-      padding: 5px 4px;
-      border-bottom: 1px solid rgba(51,65,85,0.9);
-      font-size: 0.8rem;
-    }
-
-    body.light th,
-    body.light td {
-      border-color: rgba(148,163,184,0.8);
-    }
-
-    /* Modals */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 80;
-    }
-
-    .modal {
-      width: min(480px, 94vw);
-      background: rgba(15,23,42,0.98);
-      border-radius: 20px;
-      border: 1px solid rgba(51,65,85,0.95);
-      box-shadow: 0 26px 80px rgba(15,23,42,0.95);
-      padding: 14px 14px 10px;
-      font-size: 0.85rem;
-    }
-
-    body.light .modal {
-      background: #f9fafb;
-      border-color: rgba(148,163,184,0.9);
-      box-shadow: var(--shadow-soft-light);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .modal-title {
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .modal-body {
-      max-height: 440px;
-      overflow: auto;
-      padding-inline-end: 2px;
-    }
-
-    .modal-footer {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 6px;
-    }
-
-    .text-note {
-      font-size: 0.78rem;
-      opacity: 0.85;
-      margin-top: 4px;
-    }
-
-    /* Profile layout */
-    .profile-layout {
-      display: grid;
-      grid-template-columns: minmax(260px, 0.95fr) minmax(0, 1.4fr);
-      gap: 14px;
-      align-items: flex-start;
-    }
-
-    @media (max-width: 880px) {
-      .profile-layout {
-        grid-template-columns: minmax(0,1fr);
-      }
-    }
-
-    .profile-main-card {
-      text-align: center;
-      padding-top: 16px;
-      padding-bottom: 16px;
-    }
-
-    .profile-avatar-big {
-      width: 96px;
-      height: 96px;
-      border-radius: 999px;
-      margin: 0 auto 10px;
-      background:
-        radial-gradient(circle at 20% 20%, #22d3ee, transparent 55%),
-        radial-gradient(circle at 80% 80%, #6366f1, transparent 55%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #e5e7eb;
-      overflow: hidden;
-    }
-
-    .profile-main-name {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .profile-main-title {
-      font-size: 0.8rem;
-      opacity: 0.85;
-      margin-bottom: 8px;
-    }
-
-    .profile-main-meta {
-      font-size: 0.78rem;
-      opacity: 0.9;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .profile-fields-card .form-group {
-      margin-bottom: 10px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>لوحة DEMAN Panel - PSN Tools</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #05050a;
+            color: #f9fafb;
+        }
+        .page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .card {
+            background: #111827;
+            border-radius: 18px;
+            padding: 24px;
+            max-width: 1000px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            border: 1px solid rgba(129, 140, 248, 0.35);
+        }
+        h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+        }
+        .subtitle {
+            margin: 0 0 20px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        label {
+            font-size: 14px;
+            margin-bottom: 4px;
+            display: block;
+        }
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #374151;
+            background: #020617;
+            color: #e5e7eb;
+            outline: none;
+            font-size: 14px;
+        }
+        input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.7);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 10px 18px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            gap: 6px;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg,#4f46e5,#7c3aed);
+            color: #f9fafb;
+            box-shadow: 0 12px 30px rgba(79,70,229,0.5);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 40px rgba(79,70,229,0.7);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: #9ca3af;
+            border: 1px solid #374151;
+        }
+        .btn-ghost:hover {
+            background: #111827;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+            transform: none;
+            box-shadow: none;
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .row > .col {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+        .mt-8 { margin-top: 8px; }
+        .mt-12 { margin-top: 12px; }
+        .mt-16 { margin-top: 16px; }
+        .mt-24 { margin-top: 24px; }
+        .mb-8 { margin-bottom: 8px; }
+        .mb-16 { margin-bottom: 16px; }
+        .text-sm { font-size: 14px; }
+        .text-xs { font-size: 12px; }
+        .text-muted { color: #9ca3af; }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: rgba(31,41,55,0.9);
+            color: #e5e7eb;
+        }
+        .tag-green {
+            background: rgba(16,185,129,0.15);
+            color: #6ee7b7;
+        }
+        .tag-yellow {
+            background: rgba(234,179,8,0.15);
+            color: #facc15;
+        }
+        .tag-red {
+            background: rgba(248,113,113,0.15);
+            color: #fecaca;
+        }
+        .tag-blue {
+            background: rgba(59,130,246,0.15);
+            color: #bfdbfe;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .divider {
+            border-top: 1px solid #1f2937;
+            margin: 16px 0;
+        }
+        .cards-grid {
+            display: grid;
+            gap: 12px;
+        }
+        @media (min-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 2.2fr 1.8fr;
+            }
+        }
+        .subcard {
+            background: radial-gradient(circle at top left, rgba(79,70,229,0.32), transparent 55%);
+            border-radius: 16px;
+            border: 1px solid rgba(55,65,81,0.9);
+            padding: 14px;
+        }
+        .subcard-soft {
+            background: #020617;
+            border-radius: 16px;
+            border: 1px solid #1f2937;
+            padding: 14px;
+        }
+        .pill-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .big-number {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #374151;
+            background: #020617;
+            color: #e5e7eb;
+            font-size: 13px;
+            resize: vertical;
+        }
+        .textarea:focus {
+            border-color: #6366f1;
+            outline: none;
+            box-shadow: 0 0 0 1px rgba(99,102,241,0.7);
+        }
+        .status-text {
+            font-size: 13px;
+            min-height: 18px;
+        }
+        .status-text.error {
+            color: #fecaca;
+        }
+        .status-text.success {
+            color: #6ee7b7;
+        }
+
+        /* تبويبات بسيطة */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #1f2937;
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+        }
+        .tab {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+        .tab.active {
+            background: rgba(79,70,229,0.22);
+            color: #e5e7eb;
+        }
+
+        .hidden { display: none; }
+        .avatar {
+            width: 100%;
+            max-width: 120px;
+            border-radius: 18px;
+            border: 1px solid #374151;
+        }
+    </style>
 </head>
 <body>
-<div class="ps-bg">
-  <div class="ps-shape ps-triangle">△</div>
-  <div class="ps-shape ps-square">☐</div>
-  <div class="ps-shape ps-cross">✕</div>
-  <div class="ps-shape ps-circle">⭘</div>
-</div>
-
-<!-- ===== AUTH AREA ===== -->
-<section id="authSection" class="auth-wrapper">
-  <div class="logo-pill">DT</div>
-
-  <div class="auth-card">
-    <!-- خطوة البريد + كلمة المرور -->
-    <div id="view-login" class="view active">
-      <div class="auth-header">
-        <div class="auth-title">منوّر يا بطل 🔐</div>
-        <div class="auth-sub">
-          هذه المنظومة للاستخدام الداخلي فقط لفريق
-          <strong>DEMAN Team</strong>
-        </div>
-      </div>
-
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="loginEmail">البريد الوظيفي</label>
-          <input type="email" id="loginEmail" placeholder="team@deman.store" required>
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">كلمة المرور</label>
-          <div class="password-wrapper">
-            <input type="password" id="loginPassword" placeholder="••••••••" required>
-            <button type="button" class="toggle-password" data-target="loginPassword">عرض</button>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">استمرار</button>
-      </form>
-
-      <div class="auth-footer">
-        <div class="pill-text">
-          الدخول مسموح فقط لفريق <strong>DEMAN.STORE</strong> – أي وصول غير
-          مصرّح به سيتم تجاهله.
-        </div>
-      </div>
-    </div>
-
-    <!-- خطوة كود على الإيميل -->
-    <div id="view-email-code" class="view">
-      <div class="auth-header">
-        <div class="auth-title">تأكيد تسجيل الدخول برمز على الإيميل ✉️</div>
-        <div class="auth-sub">
-          تم إرسال كود مكوّن من 6 أرقام إلى بريدك
-          <strong id="emailLabel">المسجّل في النظام</strong>
-        </div>
-      </div>
-
-      <form id="emailCodeForm">
-        <div class="form-group">
-          <label for="emailCodeInput">أدخل الكود</label>
-          <input
-            type="text"
-            id="emailCodeInput"
-            maxlength="6"
-            inputmode="numeric"
-            placeholder="مثال: 123456"
-            required
-          >
-        </div>
-
-        <!-- خانة تذكّر هذا الجهاز -->
-        <div class="form-group" style="margin-top:6px;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;margin-bottom:0;">
-            <input
-              type="checkbox"
-              id="rememberDevice"
-              style="width:auto;accent-color:#3b82f6;"
-            >
-            <span>تذكّر هذا الجهاز (عدم طلب الكود في المرات الجاية)</span>
-          </label>
-          <div class="text-note">
-            لا تفعِّل الخيار على أجهزة مشتركة أو أجهزة مقاهي.
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary">تأكيد الدخول</button>
-      </form>
-
-      <div class="auth-footer">
-        <button id="backToLoginBtn" class="btn btn-ghost" type="button">
-          الرجوع لتعديل البريد / كلمة المرور
-        </button>
-        <div class="pill-text" style="margin-top:6px;">
-          في النسخة الحالية يتم توليد الكود من الباكند وإرساله على الإيميل المسجّل.
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="contact-bar">
-    <div>لو تحتاج دعم من الإدارة:</div>
-    <div class="contact-links">
-      <a href="https://wa.me/966571330193" target="_blank" class="contact-icon">
-        <span class="icon-circle">WA</span><span>واتساب</span>
-      </a>
-
-      <!-- زر أداة تحليل حساب PSN داخل الداشبورد -->
-      <button type="button" id="openPsnPanelFromFooter" class="contact-icon">
-        <span class="icon-circle">PS</span><span>أداة تحليل حساب PSN</span>
-      </button>
-
-      <a href="https://instagram.com/deman.store" target="_blank" class="contact-icon">
-        <span class="icon-circle">IG</span><span>إنستقرام</span>
-      </a>
-      <a href="tel:0571330193" class="contact-icon">
-        <span class="icon-circle">📞</span><span>اتصال</span>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- ===== DASHBOARD ===== -->
-<section id="dashboard">
-  <div class="app-shell">
-    <header class="app-header">
-      <div class="app-title">
-        إدارة استرجاع الحسابات
-        <span class="badge">DEMAN Panel</span>
-      </div>
-      <div class="header-right">
-        <button id="menuToggle" class="icon-btn" title="شريط المزيد">☰</button>
-        <button id="profileBtn" class="icon-btn profile-btn" title="ملف الموظف">
-          <div id="headerAvatar" class="avatar">DT</div>
-          <span id="profileNameLabel" class="profile-name">DEMAN Team</span>
-        </button>
-      </div>
-
-      <div id="profileMenu" class="profile-menu">
-        <div class="profile-row">
-          <div class="avatar" id="profileMenuAvatar">DT</div>
-          <div>
-            <div id="profileMenuName" style="font-weight:600;font-size:0.85rem;">
-              DEMAN Team
+<div class="page">
+    <div class="card">
+        <!-- الهيدر -->
+        <div class="row" style="align-items: center; margin-bottom: 16px;">
+            <div class="col">
+                <h1>لوحة تحكم فريق DEMAN</h1>
+                <p class="subtitle">دخول الموظفين + أداة تحليل حسابات PSN للعملاء.</p>
             </div>
-            <div class="profile-row-main-text" id="profileMenuPhone">
-              بدون رقم موثَّق بعد
+            <div style="text-align:left; min-width: 120px;">
+                <span class="tag tag-blue" id="user-badge" style="display:none;">
+                    موظف: <span id="user-name-span"></span>
+                </span>
             </div>
-          </div>
-        </div>
-        <div id="manageAccountItem" class="profile-item">
-          إدارة الحساب / ملف الموظف
-        </div>
-        <div id="logoutItem" class="profile-item" style="color:#fca5a5;">
-          تسجيل الخروج
-        </div>
-      </div>
-    </header>
-
-    <aside id="sideMenu" class="side-menu">
-      <div class="side-title">شريط التنقل</div>
-
-      <div class="side-item" data-view="main">
-        <div class="side-item-main">
-          <div class="side-icon">ID</div>
-          <span>الحسابات المدخلة</span>
-        </div>
-        <small>عرض / تعديل</small>
-      </div>
-
-      <div class="side-item" data-view="payments">
-        <div class="side-item-main">
-          <div class="side-icon">﷼</div>
-          <span>المدفوعات</span>
-        </div>
-        <small>جدول + تقسيم</small>
-      </div>
-
-      <div class="side-item" data-view="tools">
-        <div class="side-item-main">
-          <div class="side-icon">⚙</div>
-          <span>الأدوات</span>
-        </div>
-        <small>بنود / أسعار</small>
-      </div>
-
-      <div class="side-item" data-view="info">
-        <div class="side-item-main">
-          <div class="side-icon">📝</div>
-          <span>معلومات العميل</span>
-        </div>
-        <small>نموذج جاهز</small>
-      </div>
-
-      <div class="side-item" data-view="psn">
-        <div class="side-item-main">
-          <div class="side-icon">🎮</div>
-          <span>تحليل حساب PSN</span>
-        </div>
-        <small>تروفيز / ريجن / نشاط</small>
-      </div>
-
-      <div class="side-item" data-view="profile">
-        <div class="side-item-main">
-          <div class="side-icon">👤</div>
-          <span>ملف الموظف</span>
-        </div>
-        <small>الصورة والبيانات</small>
-      </div>
-
-      <div class="side-footer">
-        <button id="themeToggle" class="theme-toggle">
-          <span>تغيير الثيم</span>
-          <span id="themeLabel">داكن</span>
-        </button>
-      </div>
-    </aside>
-
-    <nav class="tabs">
-      <div class="tab active" data-view="main">القائمة الرئيسية</div>
-      <div class="tab" data-view="payments">المدفوعات</div>
-      <div class="tab" data-view="tools">الأدوات</div>
-      <div class="tab" data-view="info">معلومات العميل</div>
-      <div class="tab" data-view="psn">تحليل حساب PSN</div>
-      <div class="tab" data-view="profile">ملف الموظف</div>
-    </nav>
-
-    <main class="app-body">
-      <!-- MAIN -->
-      <section id="panel-main" class="view-panel active">
-        <div class="search-row">
-          <input
-            id="searchInput"
-            class="search-input"
-            type="text"
-            placeholder="ابحث بالـ ID أو البريد..."
-          >
-          <button id="addAccountBtn" class="btn-add">
-            <span>＋</span> إضافة حساب جديد
-          </button>
-          <span id="resultsChip" class="info-chip">0 حسابات</span>
         </div>
 
-        <div class="grid-main">
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">القائمة الرئيسية</div>
-                <div class="card-sub">
-                  حسابات استرجاع سوني – بحث، عرض، تعديل وإضافة
+        <!-- شاشة الدخول -->
+        <div id="login-section">
+            <p class="text-sm text-muted mb-16">
+                سجّل دخولك بإيميل الموظف وكلمة المرور الداخلية للوحة.
+            </p>
+            <div class="row">
+                <div class="col">
+                    <label for="email-input">إيميل الموظف</label>
+                    <input id="email-input" type="email" placeholder="name@deman.store أو إيميل جوجل" />
                 </div>
-              </div>
-            </div>
-            <div id="accountsList" class="list"></div>
-          </div>
-
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">قائمة الأخير</div>
-                <div class="card-sub">
-                  أحدث العمليات (يمكن الضغط على كل عملية للتفاصيل)
+                <div class="col">
+                    <label for="password-input">كلمة المرور الداخلية</label>
+                    <input id="password-input" type="password" placeholder="••••••••" />
                 </div>
-              </div>
             </div>
-            <div id="recentList" class="recent-list"></div>
-          </div>
+            <div class="row mt-16" style="align-items:center;">
+                <button id="login-btn" class="btn btn-primary">
+                    <span>تسجيل الدخول</span>
+                </button>
+                <span id="login-status" class="status-text text-sm"></span>
+            </div>
         </div>
-      </section>
 
-      <!-- PAYMENTS -->
-      <section id="panel-payments" class="view-panel">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">المدفوعات</div>
-              <div class="card-sub">
-                إدخال المبالغ وتقسيمها تلقائيًا بين خالد (60٪) وعبدالفتاح (40٪)
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="paymentInput">أدخل مبلغ (ريال)</label>
-            <input type="number" id="paymentInput" min="0" placeholder="مثال: 100">
-          </div>
-
-          <button id="addPaymentBtn" class="btn btn-primary" style="width:auto;">
-            إضافة للجدول
-          </button>
-
-          <div style="margin-top:12px;overflow:auto;">
-            <table>
-              <thead>
-              <tr>
-                <th>المبلغ الكلي</th>
-                <th>خالد 60٪</th>
-                <th>عبدالفتاح 40٪</th>
-                <th>ملاحظات</th>
-              </tr>
-              </thead>
-              <tbody id="paymentsTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- TOOLS -->
-      <section id="panel-tools" class="view-panel">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">الأدوات</div>
-              <div class="card-sub">
-                بنود الاسترجاع – الأسعار – طرق الدفع – الحساب البنكي (قابلة للتعديل)
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="toolsText">نص الأدوات / السياسات</label>
-            <textarea
-              id="toolsText"
-              placeholder="اكتب هنا بند الاسترجاع، الأسعار، طرق الدفع، بيانات الحساب البنكي..."
-            ></textarea>
-            <div class="text-note">
-              كل ما تحفظ هنا يتم تخزينه محلياً ويظهر كل مرة تفتح المنظومة من نفس المتصفح.
-            </div>
-          </div>
-
-          <button id="saveToolsBtn" class="btn btn-primary" style="width:auto;">
-            حفظ التعديلات
-          </button>
-        </div>
-      </section>
-
-      <!-- INFO TEMPLATE -->
-      <section id="panel-info" class="view-panel">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">المعلومات – نموذج رسالة للعميل</div>
-              <div class="card-sub">
-                عبّئ النموذج ثم اضغط "توليد ونسخ النص" لإرساله للعميل في الواتساب / الرسائل
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="infoId">الايدي</label>
-            <input type="text" id="infoId" placeholder="Nickname123">
-          </div>
-
-          <div class="form-group">
-            <label for="infoInfo">معلوماتك</label>
-            <textarea
-              id="infoInfo"
-              placeholder="مثال: دولة الحساب، نوع الجهاز، ملاحظات عامة عن العميل"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="infoEmail">الإيميل</label>
-            <input type="text" id="infoEmail" placeholder="example@mail.com">
-          </div>
-
-          <div class="form-group">
-            <label for="infoPassword">الباسوورد</label>
-            <input type="text" id="infoPassword" placeholder="كلمة المرور المؤقتة / الجديدة">
-          </div>
-
-          <div class="text-note">
-            أسفل هذه البيانات سيتم إضافة نص ثابت تلقائياً:
-            "ننصحك بتغيير كلمة المرور والبريد وتفعيل التحقق المزدوج وعدم مشاركة الحساب نهائياً (اختياري)..."
-          </div>
-
-          <button
-            id="buildInfoBtn"
-            class="btn btn-primary"
-            style="width:auto;margin-top:10px;"
-          >
-            توليد ونسخ النص
-          </button>
-
-          <div class="form-group" style="margin-top:10px;">
-            <label>النص النهائي (للمراجعة)</label>
-            <textarea id="infoPreview" readonly></textarea>
-          </div>
-        </div>
-      </section>
-
-      <!-- PSN ANALYZER -->
-      <section id="panel-psn" class="view-panel">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">تحليل حساب PSN</div>
-              <div class="card-sub">
-                أدخل الأيدي (ID) لتحليل الحساب وتجهيز ملاحظاتك قبل فتح ملف الاسترجاع.
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="psnIdInput">الأيدي (ID) في سوني</label>
-            <input
-              type="text"
-              id="psnIdInput"
-              placeholder="مثال: KingDeman_123"
-            >
-          </div>
-
-          <button
-            id="psnAnalyzeBtn"
-            class="btn btn-primary"
-            style="width:auto;margin-top:4px;"
-          >
-            تحليل الحساب الآن
-          </button>
-
-          <div class="text-note">
-            الزر يتصل بباك إند Flask عندك (مثلاً <code>/api/psn-analyze</code>)
-            ويجيب بيانات التروفيز والريجن وآخر نشاط، وتظهر هنا بشكل منظم.
-          </div>
-
-          <div class="form-group" style="margin-top:12px;">
-            <label>نتيجة التحليل</label>
-            <textarea
-              id="psnResultBox"
-              readonly
-              placeholder="هنا تظهر نتيجة التحليل: الرجن، عدد التروفيز، آخر لعبة، ملاحظات..."
-            ></textarea>
-          </div>
-        </div>
-      </section>
-
-      <!-- PROFILE -->
-      <section id="panel-profile" class="view-panel">
-        <div class="profile-layout">
-          <div class="card profile-main-card">
-            <div id="profileAvatarBig" class="profile-avatar-big">DT</div>
-            <div id="profileCardName" class="profile-main-name">DEMAN Team</div>
-            <div id="profileCardTitle" class="profile-main-title">
-              أخصائي استرجاع حسابات
-            </div>
-            <div class="profile-main-meta">
-              <span id="profileCardPhone">لا يوجد رقم مسجّل</span>
-              <span id="profileCardTelegram">@deman_support</span>
-            </div>
-          </div>
-
-          <div class="card profile-fields-card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">ملف الموظف</div>
-                <div class="card-sub">
-                  حدّث بياناتك كموظف في DEMAN.STORE (محلي على جهازك).
+        <!-- لوحة الداشبورد بعد تسجيل الدخول -->
+        <div id="dashboard-section" class="hidden">
+            <!-- شريط علوي -->
+            <div class="row" style="align-items:center; margin-bottom: 8px;">
+                <div class="col">
+                    <span class="pill-label">مرحبًا</span>
+                    <div class="text-sm">
+                        <strong id="dash-username"></strong>، جاهز تشتغل على حسابات العملاء اليوم 👌
+                    </div>
                 </div>
-              </div>
+                <div style="text-align:left; min-width: 140px;">
+                    <button id="logout-btn" class="btn btn-ghost text-xs">
+                        تسجيل خروج
+                    </button>
+                </div>
             </div>
 
-            <div class="form-group">
-              <label for="profileDisplayNameInput">الاسم الظاهر</label>
-              <input
-                type="text"
-                id="profileDisplayNameInput"
-                placeholder="مثال: عبدالفتاح – DEMAN Team"
-              >
+            <!-- تبويبات -->
+            <div class="tabs">
+                <div class="tab active" data-tab="psn-tab">تحليل حساب PSN</div>
+                <div class="tab" data-tab="coming-tab">أدوات قادمة</div>
             </div>
 
-            <div class="form-group">
-              <label for="profileTitleInput">المسمّى الوظيفي</label>
-              <input
-                type="text"
-                id="profileTitleInput"
-                placeholder="مثال: أخصائي استرجاع حسابات سوني"
-              >
+            <!-- تبويب PSN -->
+            <div id="psn-tab" class="tab-panel">
+                <!-- فورم الإدخال -->
+                <div class="subcard-soft mb-16">
+                    <div class="section-title">تحليل حساب PSN للعميل</div>
+                    <p class="text-xs text-muted mb-8">
+                        اكتب الـ Online ID للحساب، وسيتم جلب تقرير تحليلي + نص جاهز لإرساله للعميل.
+                    </p>
+                    <div class="row">
+                        <div class="col">
+                            <label for="psn-id-input">Online ID</label>
+                            <input id="psn-id-input" type="text" placeholder="مثال: Twli- أو ID العميل" />
+                        </div>
+                        <div style="display:flex; align-items:flex-end;">
+                            <button id="analyze-btn" class="btn btn-primary">
+                                تشغيل التحليل
+                            </button>
+                        </div>
+                    </div>
+                    <div id="psn-status" class="status-text text-sm mt-8"></div>
+                </div>
+
+                <!-- النتائج على شكل كروت -->
+                <div class="cards-grid">
+                    <!-- عمود اليسار: ملخص + الحالة + التروفيز -->
+                    <div class="cards-column">
+                        <!-- كرت الملخص الأعلى -->
+                        <div class="subcard mb-12">
+                            <div class="row" style="align-items: center;">
+                                <div class="col">
+                                    <div class="pill-label">ملخص الحساب</div>
+                                    <div class="text-sm">
+                                        <span id="psn-online-id">—</span>
+                                    </div>
+                                </div>
+                                <div style="text-align:left; min-width: 110px;">
+                                    <span id="psn-region-tag" class="tag">المنطقة: —</span>
+                                </div>
+                            </div>
+
+                            <div class="row mt-12">
+                                <div class="col">
+                                    <div class="pill-label">القيمة</div>
+                                    <div class="big-number" id="psn-value-segment">—</div>
+                                </div>
+                                <div class="col">
+                                    <div class="pill-label">النشاط</div>
+                                    <div class="text-sm" id="psn-activity-segment">—</div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-12">
+                                <div class="col">
+                                    <div class="pill-label">مستوى المخاطر</div>
+                                    <span id="psn-risk-tag" class="tag">—</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-12 text-sm" id="psn-worth-line">
+                                —  
+                            </div>
+                        </div>
+
+                        <!-- كرت الحالة الحالية -->
+                        <div class="subcard-soft mb-12">
+                            <div class="section-title">حالة الحساب الآن</div>
+                            <div class="text-sm">
+                                <div class="mb-4">
+                                    <span class="pill-label">الحالة</span><br />
+                                    <span id="psn-presence">—</span>
+                                </div>
+                                <div>
+                                    <span class="pill-label">اللعبة الحالية</span><br />
+                                    <span id="psn-current-title">—</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- كرت التروفيز -->
+                        <div class="subcard-soft">
+                            <div class="section-title">التروفيز</div>
+                            <div class="text-xs text-muted mb-4" id="psn-trophy-summary">
+                                — 
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="pill-label">المستوى</div>
+                                    <div class="big-number" id="psn-trophy-level">—</div>
+                                </div>
+                                <div class="col">
+                                    <div class="pill-label">الإجمالي</div>
+                                    <div class="big-number" id="psn-trophy-total">—</div>
+                                </div>
+                            </div>
+                            <div class="row mt-12 text-sm">
+                                <div class="col">
+                                    🏆 بلاتينيوم: <span id="psn-trophy-plat">0</span>
+                                </div>
+                                <div class="col">
+                                    🥇 ذهبي: <span id="psn-trophy-gold">0</span>
+                                </div>
+                            </div>
+                            <div class="row mt-8 text-sm">
+                                <div class="col">
+                                    🥈 فضي: <span id="psn-trophy-silver">0</span>
+                                </div>
+                                <div class="col">
+                                    🥉 برونزي: <span id="psn-trophy-bronze">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- عمود اليمين: ألعاب وأصدقاء + مخاطر + نصوص -->
+                    <div class="cards-column">
+                        <!-- كرت الألعاب والأصدقاء -->
+                        <div class="subcard-soft mb-12">
+                            <div class="section-title">الألعاب والأصدقاء</div>
+                            <div class="text-sm">
+                                <div class="mb-4">
+                                    🎮 عدد الألعاب (Trophy Titles): 
+                                    <strong id="psn-titles-count">—</strong>
+                                </div>
+                                <div class="mb-4">
+                                    👥 الأصدقاء الكلي: 
+                                    <strong id="psn-friends-total">—</strong>
+                                </div>
+                                <div>
+                                    🟢 أصدقاء أونلاين (تقديري): 
+                                    <strong id="psn-friends-online">—</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- كرت المخاطر + الأفاتار -->
+                        <div class="subcard-soft mb-12">
+                            <div class="section-title">تحليل المخاطر والأفاتار</div>
+                            <div class="text-sm mb-8" id="psn-risk-flags">
+                                لا توجد ملاحظات مخاطر إضافية.
+                            </div>
+                            <div style="display:flex; gap: 12px; align-items:flex-start;">
+                                <div style="flex:1;">
+                                    <span class="pill-label">رابط الأفاتار</span>
+                                    <div class="text-xs" id="psn-avatar-url">—</div>
+                                </div>
+                                <div style="text-align:left;">
+                                    <img id="psn-avatar-img" class="avatar" src="" alt="Avatar" style="display:none;" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- نص العميل الجاهز + زر نسخ -->
+                        <div class="subcard-soft">
+                            <div class="section-title">نص جاهز للعميل</div>
+                            <textarea id="client-message-textarea" class="textarea" placeholder="النص الجاهز بيطلع هنا بعد التحليل"></textarea>
+                            <div class="row mt-8" style="align-items:center;">
+                                <button id="copy-client-message-btn" class="btn btn-ghost text-xs">
+                                    نسخ النص للعميل
+                                </button>
+                                <span id="copy-status" class="status-text text-xs"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تقرير داخلي كنص كامل (اختياري) -->
+                <div class="divider mt-24"></div>
+                <div>
+                    <div class="section-title">تقرير داخلي كامل (للاستخدام عند الحاجة)</div>
+                    <textarea id="internal-report-textarea" class="textarea" style="min-height: 140px;"
+                              placeholder="التقرير الداخلي الكامل من الباك إند يظهر هنا..."></textarea>
+                </div>
             </div>
 
-            <div class="form-group">
-              <label for="profilePhoneInput">رقم الجوال</label>
-              <input type="text" id="profilePhoneInput" placeholder="05XXXXXXXX">
+            <!-- تبويب ثاني (قادم) -->
+            <div id="coming-tab" class="tab-panel hidden">
+                <div class="subcard-soft">
+                    <div class="section-title">أدوات قادمة</div>
+                    <p class="text-sm text-muted">
+                        هنا مستقبلاً تضيف أدوات ثانية (فلترة NPSSO, إدارة الموظفين, تقارير يومية... إلخ).
+                        حالياً كل التركيز على تبويب تحليل حساب PSN.
+                    </p>
+                </div>
             </div>
-
-            <div class="form-group">
-              <label for="profileTelegramInput">تيليجرام / وسيلة تواصل داخلية</label>
-              <input type="text" id="profileTelegramInput" placeholder="@nickname">
-            </div>
-
-            <div class="form-group">
-              <label for="profileAvatarInput">الصورة الشخصية</label>
-              <input type="file" id="profileAvatarInput" accept="image/*" />
-              <div class="text-note">
-                اختر صورة من جهازك ليتم حفظها محلياً في هذا المتصفح فقط.
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="profileAboutInput">نبذة عنك</label>
-              <textarea
-                id="profileAboutInput"
-                placeholder="مثال: خبرة 3 سنوات في استرجاع الحسابات، أركز على الأمان ورضا العميل..."
-              ></textarea>
-            </div>
-
-            <button id="saveProfileBtn" class="btn btn-primary" style="width:auto;">
-              حفظ ملف الموظف
-            </button>
-          </div>
         </div>
-      </section>
-    </main>
-  </div>
-</section>
-
-<!-- MODAL ADD / EDIT ACCOUNT -->
-<div id="accountModalBackdrop" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-header">
-      <div id="accountModalTitle" class="modal-title">إضافة حساب جديد</div>
-      <button id="closeAccountModal" class="icon-btn">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label for="fieldId">الـ ID</label>
-        <input type="text" id="fieldId" placeholder="مثال: KingDeman_123">
-      </div>
-      <div class="form-group">
-        <label for="fieldFileNumber">رقم الملف</label>
-        <input type="text" id="fieldFileNumber" placeholder="مثال: 2025-001">
-      </div>
-      <div class="form-group">
-        <label for="fieldEmail">البريد الأساسي / الأخير</label>
-        <input type="text" id="fieldEmail" placeholder="example@mail.com">
-      </div>
-      <div class="form-group">
-        <label for="fieldProblem">وصف المشكلة</label>
-        <textarea
-          id="fieldProblem"
-          placeholder="حساب مخترق / فقدان كلمة المرور / ..."
-        ></textarea>
-      </div>
-      <div class="form-group">
-        <label for="fieldStatus">حالة الحساب</label>
-        <select id="fieldStatus">
-          <option value="">اختر حالة الحساب</option>
-          <option value="قيد العمل">قيد العمل</option>
-          <option value="مكتمل">مكتمل</option>
-          <option value="مرفوض">مرفوض</option>
-          <option value="معلّق">معلّق</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="fieldMainInfo">المعلومة الأساسية</label>
-        <textarea
-          id="fieldMainInfo"
-          placeholder="أهم معلومة عن الحالة أو العميل"
-        ></textarea>
-      </div>
-      <div class="form-group">
-        <label for="fieldNotes">خانة الملاحظات</label>
-        <textarea
-          id="fieldNotes"
-          placeholder="تفاصيل إضافية – من عدّل، ماذا حدث..."
-        ></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button id="cancelAccountModal" class="btn btn-ghost">إلغاء</button>
-      <button id="saveAccountBtn" class="btn btn-primary" style="width:auto;">
-        حفظ
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL RECENT DETAILS -->
-<div id="recentDetailsBackdrop" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">تفاصيل العملية</div>
-      <button id="closeRecentDetails" class="icon-btn">✕</button>
-    </div>
-    <div class="modal-body">
-      <div
-        id="recentDetailsContent"
-        style="font-size:0.84rem;line-height:1.7;"
-      ></div>
-    </div>
-    <div class="modal-footer">
-      <button
-        id="closeRecentDetailsBtn"
-        class="btn btn-primary"
-        style="width:auto;"
-      >
-        إغلاق
-      </button>
-    </div>
-  </div>
 </div>
 
 <script>
-  const STORAGE_KEY = "deman_panel_state_v2";
+    // عناصر عامة
+    const loginSection = document.getElementById("login-section");
+    const dashboardSection = document.getElementById("dashboard-section");
+    const userBadge = document.getElementById("user-badge");
+    const dashUsernameSpan = document.getElementById("dash-username");
+    const userNameSpan = document.getElementById("user-name-span");
 
-  let accounts = [];
-  let recentActions = [];
-  let payments = [];
-  let profile = {
-    displayName: "DEMAN Team",
-    title: "أخصائي استرجاع حسابات",
-    phone: "",
-    telegram: "@deman_support",
-    avatarUrl: "",
-    avatarData: "",
-    about: ""
-  };
-  let editingIndex = null;
+    // عناصر تسجيل الدخول
+    const emailInput = document.getElementById("email-input");
+    const passwordInput = document.getElementById("password-input");
+    const loginBtn = document.getElementById("login-btn");
+    const loginStatus = document.getElementById("login-status");
+    const logoutBtn = document.getElementById("logout-btn");
 
-  function loadState() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      accounts = [
-        {
-          id: "Nickname123",
-          fileNumber: "2025-001",
-          email: "kingdeman00068@hotmail.com",
-          problem: "استرجاع حساب سوني – فقدان كلمة المرور",
-          status: "مكتمل",
-          mainInfo: "تم استرجاع الحساب بنجاح",
-          notes: "نصحناه بتفعيل التحقق المزدوج",
-          lastEditor: "عبدالفتاح",
-          updatedAt: new Date()
-        }
-      ];
-      recentActions = [];
-      payments = [];
-      profile = {
-        displayName: "DEMAN Team",
-        title: "أخصائي استرجاع حسابات",
-        phone: "",
-        telegram: "@deman_support",
-        avatarUrl: "",
-        avatarData: "",
-        about: ""
-      };
-      return;
-    }
+    // عناصر PSN
+    const psnIdInput = document.getElementById("psn-id-input");
+    const analyzeBtn = document.getElementById("analyze-btn");
+    const psnStatus = document.getElementById("psn-status");
 
-    try {
-      const s = JSON.parse(raw);
-      if (Array.isArray(s.accounts)) accounts = s.accounts;
-      if (Array.isArray(s.recentActions)) recentActions = s.recentActions;
-      if (Array.isArray(s.payments)) payments = s.payments;
-      if (s.profile) profile = Object.assign(profile, s.profile);
-      if (s.toolsText && document.getElementById("toolsText")) {
-        document.getElementById("toolsText").value = s.toolsText;
-      }
-    } catch (e) {
-      console.error("Error parsing state", e);
-    }
-  }
+    // كروت الملخص
+    const psnOnlineId = document.getElementById("psn-online-id");
+    const psnRegionTag = document.getElementById("psn-region-tag");
+    const psnValueSegment = document.getElementById("psn-value-segment");
+    const psnActivitySegment = document.getElementById("psn-activity-segment");
+    const psnRiskTag = document.getElementById("psn-risk-tag");
+    const psnWorthLine = document.getElementById("psn-worth-line");
 
-  function saveState() {
-    const toolsTextEl = document.getElementById("toolsText");
-    const toolsText = toolsTextEl ? toolsTextEl.value : "";
-    const state = {
-      accounts,
-      recentActions,
-      payments,
-      profile,
-      toolsText
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
+    // حالة الحساب
+    const psnPresence = document.getElementById("psn-presence");
+    const psnCurrentTitle = document.getElementById("psn-current-title");
 
-  function formatDate(d) {
-    if (!d) return "";
-    const date = new Date(d);
-    return date.toLocaleString("en-GB", {
-      year: "2-digit",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  }
+    // التروفيز
+    const psnTrophySummary = document.getElementById("psn-trophy-summary");
+    const psnTrophyLevel = document.getElementById("psn-trophy-level");
+    const psnTrophyTotal = document.getElementById("psn-trophy-total");
+    const psnTrophyPlat = document.getElementById("psn-trophy-plat");
+    const psnTrophyGold = document.getElementById("psn-trophy-gold");
+    const psnTrophySilver = document.getElementById("psn-trophy-silver");
+    const psnTrophyBronze = document.getElementById("psn-trophy-bronze");
 
-  function addRecentAction(type, description, by) {
-    recentActions.push({
-      type,
-      description,
-      by: by || "DEMAN Team",
-      date: new Date()
-    });
-    renderRecent();
-    saveState();
-  }
+    // الألعاب والأصدقاء
+    const psnTitlesCount = document.getElementById("psn-titles-count");
+    const psnFriendsTotal = document.getElementById("psn-friends-total");
+    const psnFriendsOnline = document.getElementById("psn-friends-online");
 
-  // Toggle password
-  document.querySelectorAll(".toggle-password").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-target");
-      const input = document.getElementById(targetId);
-      if (!input) return;
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "إخفاء";
-        btn.style.minWidth = "52px";
-        btn.style.textAlign = "center";
-      } else {
-        input.type = "password";
-        btn.textContent = "عرض";
-      }
-    });
-  });
+    // المخاطر والأفاتار
+    const psnRiskFlags = document.getElementById("psn-risk-flags");
+    const psnAvatarUrl = document.getElementById("psn-avatar-url");
+    const psnAvatarImg = document.getElementById("psn-avatar-img");
 
-  const authSection = document.getElementById("authSection");
-  const dashboard = document.getElementById("dashboard");
-  const loginView = document.getElementById("view-login");
-  const emailCodeView = document.getElementById("view-email-code");
-  const emailLabel = document.getElementById("emailLabel");
-  const backToLoginBtn = document.getElementById("backToLoginBtn");
+    // النصوص
+    const clientMessageTextarea = document.getElementById("client-message-textarea");
+    const internalReportTextarea = document.getElementById("internal-report-textarea");
+    const copyClientMessageBtn = document.getElementById("copy-client-message-btn");
+    const copyStatus = document.getElementById("copy-status");
 
-  // LOGIN -> /api/login
-  document.getElementById("loginForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    const email = document.getElementById("loginEmail").value.trim();
-    const pass = document.getElementById("loginPassword").value;
+    // تبويبات
+    const tabButtons = document.querySelectorAll(".tab");
+    const tabPanels = document.querySelectorAll(".tab-panel");
 
-    if (!email || !pass) {
-      alert("رجاءً أدخل البريد وكلمة المرور.");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: pass })
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || !data.ok) {
-        alert(data.message || "بيانات الدخول غير صحيحة.");
-        return;
-      }
-
-      // جهاز موثوق: دخول مباشر
-      if (data.skip_code) {
-        enterDashboard();
-        return;
-      }
-
-      // غير موثوق: ننتقل لخطوة الكود
-      emailLabel.textContent = data.masked_email || email;
-      loginView.classList.remove("active");
-      emailCodeView.classList.add("active");
-      const codeInput = document.getElementById("emailCodeInput");
-      codeInput.value = "";
-      codeInput.focus();
-    } catch (err) {
-      console.error(err);
-      alert("حدث خطأ في الاتصال بالسيرفر، حاول مرة أخرى.");
-    }
-  });
-
-  // BACK TO LOGIN
-  backToLoginBtn.addEventListener("click", () => {
-    emailCodeView.classList.remove("active");
-    loginView.classList.add("active");
-  });
-
-  // VERIFY CODE -> /api/verify-code
-  document
-    .getElementById("emailCodeForm")
-    .addEventListener("submit", async e => {
-      e.preventDefault();
-      const code = document.getElementById("emailCodeInput").value.trim();
-      const remember = document.getElementById("rememberDevice")?.checked || false;
-
-      if (!code) {
-        alert("أدخل الكود المرسل على الإيميل.");
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/verify-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, remember_device: remember })
+    tabButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = btn.getAttribute("data-tab");
+            tabButtons.forEach(t => t.classList.remove("active"));
+            tabPanels.forEach(p => p.classList.add("hidden"));
+            btn.classList.add("active");
+            document.getElementById(target).classList.remove("hidden");
         });
+    });
 
-        const data = await res.json().catch(() => ({}));
+    // ---- تسجيل الدخول ----
+    async function handleLogin() {
+        loginStatus.textContent = "";
+        loginStatus.className = "status-text text-sm";
 
-        if (!res.ok || !data.ok) {
-          alert(data.message || "الكود غير صحيح، تأكد وحاول مرة أخرى.");
-          return;
+        const email = (emailInput.value || "").trim();
+        const password = passwordInput.value || "";
+
+        if (!email || !password) {
+            loginStatus.textContent = "رجاءً أدخل الإيميل وكلمة المرور.";
+            loginStatus.classList.add("error");
+            return;
         }
 
-        enterDashboard();
-      } catch (err) {
-        console.error(err);
-        alert("حدث خطأ أثناء التحقق من الكود.");
-      }
-    });
+        loginBtn.disabled = true;
+        loginStatus.textContent = "جاري التحقق من البيانات...";
+        try {
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
 
-  function enterDashboard() {
-    authSection.classList.add("hidden");
-    dashboard.classList.add("active");
-    addRecentAction("دخول", "تم تسجيل الدخول إلى لوحة DEMAN", profile.displayName);
-    renderProfileUI();
-  }
+            const data = await res.json();
 
-  function resetAuthUI() {
-    // تنظيف فورم الدخول
-    document.getElementById("loginPassword").value = "";
-    document.getElementById("emailCodeInput").value = "";
-    const rememberEl = document.getElementById("rememberDevice");
-    if (rememberEl) rememberEl.checked = false;
+            if (!res.ok || !data.ok) {
+                loginStatus.textContent = data.message || "فشل تسجيل الدخول.";
+                loginStatus.classList.add("error");
+                loginBtn.disabled = false;
+                return;
+            }
 
-    emailCodeView.classList.remove("active");
-    loginView.classList.add("active");
-  }
+            // نجاح الدخول
+            loginStatus.textContent = "تم تسجيل الدخول بنجاح.";
+            loginStatus.classList.add("success");
 
-  function initialsFromName(name) {
-    return name
-      .split(" ")
-      .filter(Boolean)
-      .map(part => part[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }
+            const name = data.name || "موظف";
+            dashUsernameSpan.textContent = name;
+            userNameSpan.textContent = name;
+            userBadge.style.display = "inline-flex";
 
-  function renderProfileUI() {
-    const name = profile.displayName || "DEMAN Team";
-
-    const headerName = document.getElementById("profileNameLabel");
-    if (headerName) headerName.textContent = name;
-
-    const headerAvatar = document.getElementById("headerAvatar");
-    const menuAvatar = document.getElementById("profileMenuAvatar");
-    const profileAvatarBig = document.getElementById("profileAvatarBig");
-    const allAvatarEls = [headerAvatar, menuAvatar, profileAvatarBig];
-
-    const avatarSrc = profile.avatarData || profile.avatarUrl || "";
-
-    allAvatarEls.forEach(el => {
-      if (!el) return;
-      if (avatarSrc) {
-        el.style.backgroundImage = "url('" + avatarSrc + "')";
-        el.style.backgroundSize = "cover";
-        el.style.backgroundPosition = "center";
-        el.textContent = "";
-      } else {
-        el.style.backgroundImage = "";
-        el.textContent = initialsFromName(name || "DT");
-      }
-    });
-
-    const menuName = document.getElementById("profileMenuName");
-    if (menuName) menuName.textContent = name;
-
-    const phoneText = profile.phone
-      ? "رقم موثَّق: " + profile.phone
-      : "بدون رقم موثَّق بعد";
-    const menuPhone = document.getElementById("profileMenuPhone");
-    if (menuPhone) menuPhone.textContent = phoneText;
-
-    const nameInput = document.getElementById("profileDisplayNameInput");
-    if (nameInput) nameInput.value = name;
-
-    const titleInput = document.getElementById("profileTitleInput");
-    if (titleInput) titleInput.value = profile.title || "";
-
-    const phoneInput = document.getElementById("profilePhoneInput");
-    if (phoneInput) phoneInput.value = profile.phone || "";
-
-    const tgInput = document.getElementById("profileTelegramInput");
-    if (tgInput) tgInput.value = profile.telegram || "";
-
-    const aboutInput = document.getElementById("profileAboutInput");
-    if (aboutInput) aboutInput.value = profile.about || "";
-
-    const cardName = document.getElementById("profileCardName");
-    const cardTitle = document.getElementById("profileCardTitle");
-    const cardPhone = document.getElementById("profileCardPhone");
-    const cardTelegram = document.getElementById("profileCardTelegram");
-
-    if (cardName) cardName.textContent = name;
-    if (cardTitle) cardTitle.textContent = profile.title || "فريق DEMAN للاسترجاع";
-    if (cardPhone) cardPhone.textContent = profile.phone || "لا يوجد رقم مسجّل";
-    if (cardTelegram) cardTelegram.textContent = profile.telegram || "@deman_support";
-  }
-
-  // حفظ ملف الموظف
-  document.getElementById("saveProfileBtn").addEventListener("click", () => {
-    const nameInput = document
-      .getElementById("profileDisplayNameInput")
-      .value.trim();
-    profile.displayName = nameInput || "DEMAN Team";
-    profile.title = document.getElementById("profileTitleInput").value.trim();
-    profile.phone = document.getElementById("profilePhoneInput").value.trim();
-    profile.telegram = document
-      .getElementById("profileTelegramInput")
-      .value.trim();
-    profile.about = document.getElementById("profileAboutInput").value.trim();
-
-    renderProfileUI();
-    saveState();
-    addRecentAction("تعديل ملف", "تم تحديث ملف الموظف", profile.displayName);
-    alert("تم حفظ ملف الموظف بنجاح.");
-  });
-
-  // صورة البروفايل
-  const avatarFileInput = document.getElementById("profileAvatarInput");
-  if (avatarFileInput) {
-    avatarFileInput.addEventListener("change", () => {
-      const file = avatarFileInput.files && avatarFileInput.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        profile.avatarData = e.target.result || "";
-        saveState();
-        renderProfileUI();
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function renderAccounts(filterText) {
-    const list = document.getElementById("accountsList");
-    if (!list) return;
-    list.innerHTML = "";
-
-    const norm = (filterText || "").trim().toLowerCase();
-    const filtered = accounts.filter(acc => {
-      if (!norm) return true;
-      return (
-        (acc.id && acc.id.toLowerCase().includes(norm)) ||
-        (acc.email && acc.email.toLowerCase().includes(norm))
-      );
-    });
-
-    filtered.forEach((acc, index) => {
-      const item = document.createElement("div");
-      item.className = "list-item";
-      item.dataset.index = String(index);
-
-      let statusClass = "status-chip";
-      if (acc.status && acc.status.includes("قيد")) {
-        statusClass += " status-pending";
-      }
-      if (
-        acc.status &&
-        (acc.status.includes("مرفوض") || acc.status.includes("رفض"))
-      ) {
-        statusClass += " status-rejected";
-      }
-
-      item.innerHTML =
-        '<div class="list-row-main">' +
-        '<div class="list-id">' +
-        (acc.id || "بدون ID") +
-        "</div>" +
-        '<div class="' +
-        statusClass +
-        '">' +
-        (acc.status || "غير محدد") +
-        "</div>" +
-        "</div>" +
-        '<div class="meta-row">' +
-        "<span>📁 " +
-        (acc.fileNumber || "بدون رقم ملف") +
-        "</span>" +
-        "<span>📧 " +
-        (acc.email || "لا يوجد بريد") +
-        "</span>" +
-        "<span>✏️ آخر تعديل: " +
-        (acc.lastEditor || "-") +
-        "</span>" +
-        "</div>";
-
-      item.addEventListener("click", () => openEditAccount(index));
-      list.appendChild(item);
-    });
-
-    const chip = document.getElementById("resultsChip");
-    if (chip) chip.textContent = filtered.length + " حسابات";
-  }
-
-  function renderRecent() {
-    const list = document.getElementById("recentList");
-    if (!list) return;
-    list.innerHTML = "";
-
-    const arr = recentActions.slice().reverse();
-    arr.forEach((action, idx) => {
-      const realIndex = recentActions.length - 1 - idx;
-      const div = document.createElement("div");
-      div.className = "recent-item";
-      div.dataset.index = String(realIndex);
-
-      div.innerHTML =
-        '<div class="recent-top">' +
-        "<span>" +
-        action.description +
-        "</span>" +
-        '<span class="pill">' +
-        action.type +
-        "</span>" +
-        "</div>" +
-        '<div style="font-size:0.72rem;opacity:0.78;">' +
-        formatDate(action.date) +
-        " • " +
-        action.by +
-        "</div>";
-
-      div.addEventListener("click", () => openRecentDetails(realIndex));
-      list.appendChild(div);
-    });
-  }
-
-  function renderPayments() {
-    const tbody = document.getElementById("paymentsTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    payments.forEach(p => {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td>" +
-        p.total +
-        "</td>" +
-        "<td>" +
-        p.khalid +
-        "</td>" +
-        "<td>" +
-        p.abdulfattah +
-        "</td>" +
-        "<td>" +
-        (p.note || "") +
-        "</td>";
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Profile dropdown
-  const profileBtn = document.getElementById("profileBtn");
-  const profileMenu = document.getElementById("profileMenu");
-
-  profileBtn.addEventListener("click", e => {
-    e.stopPropagation();
-    profileMenu.style.display =
-      profileMenu.style.display === "block" ? "none" : "block";
-  });
-
-  document.addEventListener("click", () => {
-    profileMenu.style.display = "none";
-  });
-
-  profileMenu.addEventListener("click", e => e.stopPropagation());
-
-  document.getElementById("manageAccountItem").addEventListener("click", () => {
-    showPanel("profile");
-    profileMenu.style.display = "none";
-  });
-
-  // LOGOUT -> /api/logout
-  document.getElementById("logoutItem").addEventListener("click", async () => {
-    try {
-      await fetch("/api/logout", { method: "POST" });
-    } catch (e) {
-      console.warn("logout error (ignored):", e);
-    }
-    dashboard.classList.remove("active");
-    authSection.classList.remove("hidden");
-    resetAuthUI();
-  });
-
-  // Side menu
-  const sideMenu = document.getElementById("sideMenu");
-  document.getElementById("menuToggle").addEventListener("click", () => {
-    sideMenu.classList.toggle("open");
-  });
-
-  function showPanel(name) {
-    document
-      .querySelectorAll(".view-panel")
-      .forEach(v => v.classList.remove("active"));
-    const target = document.getElementById("panel-" + name);
-    if (target) target.classList.add("active");
-
-    document.querySelectorAll(".tab").forEach(t => {
-      t.classList.toggle("active", t.dataset.view === name);
-    });
-  }
-
-  document.querySelectorAll(".side-item").forEach(item => {
-    item.addEventListener("click", () => {
-      const v = item.dataset.view;
-      showPanel(v);
-      sideMenu.classList.remove("open");
-    });
-  });
-
-  document.querySelectorAll(".tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      showPanel(tab.dataset.view);
-    });
-  });
-
-  // Theme toggle
-  document.getElementById("themeToggle").addEventListener("click", () => {
-    const isLight = document.body.classList.toggle("light");
-    document.getElementById("themeLabel").textContent = isLight
-      ? "فاتح"
-      : "داكن";
-  });
-
-  const searchInput = document.getElementById("searchInput");
-  searchInput.addEventListener("input", e => {
-    renderAccounts(e.target.value);
-  });
-
-  // Account modal
-  const accountModalBackdrop = document.getElementById("accountModalBackdrop");
-  const accountModalTitle = document.getElementById("accountModalTitle");
-
-  function openAddAccount() {
-    editingIndex = null;
-    accountModalTitle.textContent = "إضافة حساب جديد";
-    document.getElementById("fieldId").value = "";
-    document.getElementById("fieldFileNumber").value = "";
-    document.getElementById("fieldEmail").value = "";
-    document.getElementById("fieldProblem").value = "";
-    document.getElementById("fieldStatus").value = "";
-    document.getElementById("fieldMainInfo").value = "";
-    document.getElementById("fieldNotes").value = "";
-    accountModalBackdrop.style.display = "flex";
-  }
-
-  function openEditAccount(index) {
-    editingIndex = index;
-    const acc = accounts[index];
-    accountModalTitle.textContent = "تعديل حساب";
-    document.getElementById("fieldId").value = acc.id || "";
-    document.getElementById("fieldFileNumber").value = acc.fileNumber || "";
-    document.getElementById("fieldEmail").value = acc.email || "";
-    document.getElementById("fieldProblem").value = acc.problem || "";
-    document.getElementById("fieldStatus").value = acc.status || "";
-    document.getElementById("fieldMainInfo").value = acc.mainInfo || "";
-    document.getElementById("fieldNotes").value = acc.notes || "";
-    accountModalBackdrop.style.display = "flex";
-  }
-
-  function closeAccountModal() {
-    accountModalBackdrop.style.display = "none";
-  }
-
-  document.getElementById("addAccountBtn").addEventListener("click", openAddAccount);
-  document.getElementById("closeAccountModal").addEventListener("click", closeAccountModal);
-  document.getElementById("cancelAccountModal").addEventListener("click", closeAccountModal);
-
-  accountModalBackdrop.addEventListener("click", e => {
-    if (e.target === accountModalBackdrop) closeAccountModal();
-  });
-
-  document.getElementById("saveAccountBtn").addEventListener("click", () => {
-    const id = document.getElementById("fieldId").value.trim();
-    if (!id) {
-      alert("الرجاء إدخال الـ ID على الأقل.");
-      return;
+            loginSection.classList.add("hidden");
+            dashboardSection.classList.remove("hidden");
+        } catch (err) {
+            console.error(err);
+            loginStatus.textContent = "خطأ في الاتصال بالسيرفر.";
+            loginStatus.classList.add("error");
+            loginBtn.disabled = false;
+        } finally {
+            loginBtn.disabled = false;
+        }
     }
 
-    const payload = {
-      id,
-      fileNumber: document.getElementById("fieldFileNumber").value.trim(),
-      email: document.getElementById("fieldEmail").value.trim(),
-      problem: document.getElementById("fieldProblem").value.trim(),
-      status: document.getElementById("fieldStatus").value.trim(),
-      mainInfo: document.getElementById("fieldMainInfo").value.trim(),
-      notes: document.getElementById("fieldNotes").value.trim(),
-      lastEditor: profile.displayName || "DEMAN Team",
-      updatedAt: new Date()
-    };
-
-    if (editingIndex === null) {
-      accounts.push(payload);
-      addRecentAction(
-        "إضافة",
-        "تم إضافة حساب: " + id,
-        profile.displayName
-      );
-    } else {
-      accounts[editingIndex] = payload;
-      addRecentAction(
-        "تعديل",
-        "تم تعديل حساب: " + id,
-        profile.displayName
-      );
-    }
-
-    renderAccounts(searchInput.value);
-    saveState();
-    closeAccountModal();
-  });
-
-  // Payments
-  document.getElementById("addPaymentBtn").addEventListener("click", () => {
-    const val = Number(document.getElementById("paymentInput").value);
-    if (!val || val <= 0) {
-      alert("أدخل مبلغ صحيح.");
-      return;
-    }
-    const khalid = Math.round(val * 0.6);
-    const abdulfattah = val - khalid;
-    payments.push({ total: val, khalid, abdulfattah, note: "" });
-    renderPayments();
-    addRecentAction(
-      "دفعة",
-      "تم إدخال دفعة بقيمة " + val + " ريال",
-      profile.displayName
-    );
-    document.getElementById("paymentInput").value = "";
-    saveState();
-  });
-
-  // Tools text حفظ
-  document.getElementById("saveToolsBtn").addEventListener("click", () => {
-    saveState();
-    addRecentAction(
-      "تعديل",
-      "تم تحديث نص الأدوات والسياسات",
-      profile.displayName
-    );
-    alert("تم حفظ نص الأدوات والسياسات.");
-  });
-
-  // Build info text
-  function buildInfoText() {
-    const id = document.getElementById("infoId").value.trim();
-    const info = document.getElementById("infoInfo").value.trim();
-    const email = document.getElementById("infoEmail").value.trim();
-    const pass = document.getElementById("infoPassword").value.trim();
-
-    const parts = [];
-    parts.push("الايدي");
-    parts.push(id || "-");
-    parts.push("");
-    parts.push("معلوماتك");
-    parts.push(info || "-");
-    parts.push("");
-    parts.push("الإيميل");
-    parts.push(email || "-");
-    parts.push("");
-    parts.push("الباسوورد");
-    parts.push(pass || "-");
-    parts.push("");
-    parts.push(
-      "ننصحك بتغيير كلمة المرور والبريد وتفعيل التحقق المزدوج وعدم مشاركة الحساب نهائياً (اختياري)"
-    );
-    parts.push("شكراً لك لاختيار متجر deman.store 💙🤍");
-    parts.push(
-      "كان معك عبدالفتاح، أتمنى أنك راضٍ عن الخدمة المقدَّمة 💪"
-    );
-    parts.push("رأيك يهمنا وصوتك يفرق 📣🙏");
-
-    return parts.join("\n");
-  }
-
-  document.getElementById("buildInfoBtn").addEventListener("click", async () => {
-    const text = buildInfoText();
-    const preview = document.getElementById("infoPreview");
-    preview.value = text;
-    try {
-      await navigator.clipboard.writeText(text);
-      alert("تم توليد النص ونسخه، جاهز للصق وإرساله للعميل.");
-    } catch (e) {
-      alert("تم توليد النص، لكن النسخ التلقائي فشل. انسخه يدوياً من المربع.");
-    }
-  });
-
-  // Recent details modal
-  const recentDetailsBackdrop = document.getElementById("recentDetailsBackdrop");
-  const recentDetailsContent = document.getElementById("recentDetailsContent");
-
-  document
-    .getElementById("closeRecentDetails")
-    .addEventListener("click", () => {
-      recentDetailsBackdrop.style.display = "none";
+    loginBtn.addEventListener("click", handleLogin);
+    passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") handleLogin();
     });
 
-  document
-    .getElementById("closeRecentDetailsBtn")
-    .addEventListener("click", () => {
-      recentDetailsBackdrop.style.display = "none";
+    // ---- تسجيل الخروج ----
+    logoutBtn.addEventListener("click", async () => {
+        try {
+            await fetch("/api/logout", { method: "POST" });
+        } catch (e) {}
+        dashboardSection.classList.add("hidden");
+        loginSection.classList.remove("hidden");
+        userBadge.style.display = "none";
+        dashUsernameSpan.textContent = "";
     });
 
-  recentDetailsBackdrop.addEventListener("click", e => {
-    if (e.target === recentDetailsBackdrop) {
-      recentDetailsBackdrop.style.display = "none";
+    // ---- استدعاء تحليل PSN ----
+    analyzeBtn.addEventListener("click", async () => {
+        psnStatus.textContent = "";
+        psnStatus.className = "status-text text-sm";
+
+        const onlineId = (psnIdInput.value || "").trim();
+        if (!onlineId) {
+            psnStatus.textContent = "رجاءً اكتب Online ID أولاً.";
+            psnStatus.classList.add("error");
+            return;
+        }
+
+        analyzeBtn.disabled = true;
+        psnStatus.textContent = "جاري تحليل الحساب، ثواني...";
+        try {
+            const res = await fetch("/api/psn-analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ online_id: onlineId }),
+            });
+
+            const data = await res.json();
+
+            if (res.status === 401) {
+                psnStatus.textContent = "الجلسة منتهية، سجّل الدخول مرة ثانية.";
+                psnStatus.classList.add("error");
+                return;
+            }
+
+            if (!res.ok || !data.ok) {
+                psnStatus.textContent = data.message || "تعذر تحليل الحساب.";
+                psnStatus.classList.add("error");
+                return;
+            }
+
+            psnStatus.textContent = "تم تحليل الحساب بنجاح.";
+            psnStatus.classList.add("success");
+
+            fillPsnCards(data);
+        } catch (err) {
+            console.error(err);
+            psnStatus.textContent = "خطأ في الاتصال بالسيرفر أثناء التحليل.";
+            psnStatus.classList.add("error");
+        } finally {
+            analyzeBtn.disabled = false;
+        }
+    });
+
+    function fillPsnCards(data) {
+        const onlineId = data.online_id || psnIdInput.value || "غير معروف";
+        const regionPretty = data.region_pretty || data.region || "غير محددة";
+        const presence = data.presence || "غير ظاهر (غالبًا مخفي/أوفلاين)";
+        const valueSegment = data.value_segment || "غير محدد";
+        const activitySegment = data.activity_segment || "غير محدد";
+        const riskLevel = data.risk_level || "غير محدد";
+        const titlesCount = data.titles_count ?? "غير متوفر";
+        const friendsTotal = data.friends_total ?? "غير متوفر (قائمة أصدقاء خاصة؟)";
+        const friendsOnlineEst = data.friends_online_est ?? "غير متوفر";
+        const avatarUrl = data.avatar_url || "N/A";
+
+        const trophies = data.trophies || {};
+        const lvl = trophies.level ?? "غير متوفر";
+        const total = trophies.total ?? "غير متوفر";
+        const pt = trophies.platinum ?? 0;
+        const gd = trophies.gold ?? 0;
+        const sv = trophies.silver ?? 0;
+        const br = trophies.bronze ?? 0;
+
+        const currentTitle = data.current_title || "لا توجد لعبة حالية أو مخفية";
+
+        const trophySummary = data.trophy_summary || "لم يتم توفير ملخص من سوني.";
+
+        // الملخص
+        psnOnlineId.textContent = onlineId;
+        psnRegionTag.textContent = "المنطقة: " + regionPretty;
+        psnValueSegment.textContent = valueSegment;
+        psnActivitySegment.textContent = activitySegment;
+
+        // لون المخاطر
+        psnRiskTag.textContent = riskLevel;
+        psnRiskTag.className = "tag";
+        const risk = (riskLevel || "").toString();
+        if (risk.includes("منخفض")) {
+            psnRiskTag.classList.add("tag-green");
+        } else if (risk.includes("متوسط")) {
+            psnRiskTag.classList.add("tag-yellow");
+        } else if (risk.includes("عالي") || risk.includes("مرتفع")) {
+            psnRiskTag.classList.add("tag-red");
+        }
+
+        // جملة يستاهل ولا لا (نفس منطق الباك)
+        let worthLine;
+        if (valueSegment.includes("عالي")) {
+            worthLine = "التقييم: الحساب يستاهل تعب الاسترجاع، اعتبره من الفئة القوية.";
+        } else if (valueSegment.includes("متوسط")) {
+            worthLine = "التقييم: حساب متوسط، مناسب لعروض سعر متوسطة، مو نادر ولا ضعيف.";
+        } else {
+            worthLine = "التقييم: حساب قيمته ضعيفة، لا تبالغ مع العميل في الوعود أو السعر.";
+        }
+        psnWorthLine.textContent = worthLine;
+
+        // حالة الحساب
+        psnPresence.textContent = presence;
+        psnCurrentTitle.textContent = currentTitle;
+
+        // التروفيز
+        psnTrophySummary.textContent = trophySummary;
+        psnTrophyLevel.textContent = lvl;
+        psnTrophyTotal.textContent = total;
+        psnTrophyPlat.textContent = pt;
+        psnTrophyGold.textContent = gd;
+        psnTrophySilver.textContent = sv;
+        psnTrophyBronze.textContent = br;
+
+        // الألعاب والأصدقاء
+        psnTitlesCount.textContent = titlesCount;
+        psnFriendsTotal.textContent = friendsTotal;
+        psnFriendsOnline.textContent = friendsOnlineEst;
+
+        // المخاطر التفصيلية
+        const riskFlags = data.risk_flags || [];
+        if (riskFlags.length === 0) {
+            psnRiskFlags.textContent = "لا توجد ملاحظات مخاطر إضافية.";
+        } else {
+            psnRiskFlags.innerHTML = riskFlags
+                .map(f => "• " + (f || ""))
+                .join("<br>");
+        }
+
+        // الأفاتار
+        psnAvatarUrl.textContent = avatarUrl;
+        if (avatarUrl && avatarUrl !== "N/A") {
+            psnAvatarImg.src = avatarUrl;
+            psnAvatarImg.style.display = "block";
+        } else {
+            psnAvatarImg.style.display = "none";
+        }
+
+        // النصوص من الباك إند
+        internalReportTextarea.value = data.message || "";
+        clientMessageTextarea.value = data.client_message || "";
     }
-  });
 
-  function openRecentDetails(index) {
-    const action = recentActions[index];
-    if (!action) return;
-    recentDetailsContent.innerHTML =
-      "<div><strong>العملية:</strong> " +
-      action.type +
-      "</div>" +
-      "<div><strong>الوصف:</strong> " +
-      action.description +
-      "</div>" +
-      "<div><strong>بواسطة:</strong> " +
-      action.by +
-      "</div>" +
-      "<div><strong>التاريخ (ميلادي):</strong> " +
-      formatDate(action.date) +
-      "</div>";
-    recentDetailsBackdrop.style.display = "flex";
-  }
+    // زر نسخ نص العميل
+    copyClientMessageBtn.addEventListener("click", async () => {
+        copyStatus.textContent = "";
+        copyStatus.className = "status-text text-xs";
 
-  // فتح تبويب تحليل PSN من الفوتر
-  const openPsnBtn = document.getElementById("openPsnPanelFromFooter");
-  if (openPsnBtn) {
-    openPsnBtn.addEventListener("click", () => {
-      if (dashboard.classList.contains("active")) {
-        showPanel("psn");
-      } else {
-        alert("سجّل دخولك أولاً، وبعدها افتح تبويب تحليل PSN من الداشبورد.");
-      }
+        const txt = clientMessageTextarea.value || "";
+        if (!txt.trim()) {
+            copyStatus.textContent = "ما فيه نص جاهز للنسخ.";
+            copyStatus.classList.add("error");
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(txt);
+            copyStatus.textContent = "تم نسخ النص للذاكرة.";
+            copyStatus.classList.add("success");
+        } catch (e) {
+            copyStatus.textContent = "تعذر النسخ تلقائيًا، انسخ يدويًا.";
+            copyStatus.classList.add("error");
+        }
     });
-  }
-
-  // تحليل حساب PSN
-    // تحليل حساب PSN
-  const psnBtn = document.getElementById("psnAnalyzeBtn");
-  const psnInput = document.getElementById("psnIdInput");
-  const psnResultBox = document.getElementById("psnResultBox");
-
-  if (psnBtn && psnInput && psnResultBox) {
-    psnBtn.addEventListener("click", async () => {
-      const onlineId = psnInput.value.trim();
-      if (!onlineId) {
-        alert("رجاءً أدخل الأيدي (Online ID) أولاً.");
-        return;
-      }
-
-      psnResultBox.value = "جاري تحليل الحساب...";
-
-      try {
-        const res = await fetch("/api/psn-analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // هنا أهم نقطة: نرسل online_id
-          body: JSON.stringify({ online_id: onlineId })
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data.ok) {
-          psnResultBox.value =
-            data.message ||
-            "تعذر تحليل الحساب، تأكد من الـ Online ID أو جرّب لاحقاً.";
-          return;
-        }
-
-        // لو الباك إند يرجّع رسالة جاهزة، استخدمها مباشرة
-        if (data.message) {
-          psnResultBox.value = data.message;
-          return;
-        }
-
-        // احتياط: بناء نص يدوي من الحقول لو ما فيه message
-        const lines = [];
-        lines.push("نتيجة تحليل حساب PSN");
-        lines.push("--------------------------");
-        lines.push("الأيدي: " + (data.online_id || onlineId));
-
-        if (data.region_pretty || data.region) {
-          lines.push("الريجن: " + (data.region_pretty || data.region));
-        }
-
-        if (data.trophy_summary) {
-          lines.push("ملخص التروفيز: " + data.trophy_summary);
-        }
-
-        if (data.titles_count != null) {
-          lines.push("عدد الألعاب (تروفي): " + data.titles_count);
-        }
-
-        if (data.friends_total != null) {
-          lines.push("عدد الأصدقاء الكلي: " + data.friends_total);
-        }
-
-        if (data.friends_online_est != null) {
-          lines.push("أصدقاء أونلاين (تقديري): " + data.friends_online_est);
-        }
-
-        if (data.last_played) {
-          lines.push("آخر لعبة / نشاط: " + data.last_played);
-        }
-
-        if (data.notes) {
-          lines.push("");
-          lines.push("ملاحظات:");
-          lines.push(data.notes);
-        }
-
-        psnResultBox.value =
-          lines.length > 0
-            ? lines.join("\n")
-            : "تم التحليل لكن ما رجعت بيانات مفيدة من السيرفر.";
-      } catch (err) {
-        console.error(err);
-        psnResultBox.value = "خطأ في الاتصال بالسيرفر أثناء تحليل الحساب.";
-      }
-    });
-  }
-
-
-  // INIT
-  loadState();
-  renderAccounts("");
-  renderRecent();
-  renderPayments();
-  renderProfileUI();
 </script>
 </body>
 </html>
-
