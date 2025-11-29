@@ -35,7 +35,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
-logger = logging.getLogger("deman-psn-panel")
+logger = logging.getLogger("emiRdjV5igMsmrfukmJpzluip8ucmSNwiin5aiJCQ1Z33bq6WR2eiJZPt0ttrWtr")
 
 # -----------------------------
 # إعداد تطبيق Flask
@@ -282,4 +282,5 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
 
