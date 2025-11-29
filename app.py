@@ -40,11 +40,10 @@ logger = logging.getLogger("deman-psn-panel")
 # -----------------------------
 # إعداد تطبيق Flask
 # -----------------------------
-# على Render: ملفات القوالب في مجلد /templates بجانب app.py
 app = Flask(
     __name__,
     template_folder="templates",
-    static_folder="static",  # لو حطّيت CSS/JS/صور لاحقاً
+    static_folder="static",
 )
 
 # NPSSO الخاص بفريق DEMAN (تحطه في ملف .env)
@@ -59,6 +58,10 @@ SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 SMTP_USER = os.getenv("SMTP_USER", "jana123216@gmail.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "CHANGE_ME_SMTP_APP_PASSWORD")
+
+# تشغيل/إيقاف الإرسال الحقيقي للإيميل
+USE_SMTP = os.getenv("USE_SMTP", "false").lower() == "true"
+SMTP_TIMEOUT = float(os.getenv("SMTP_TIMEOUT", "10"))
 
 # الموظفين المصرّح لهم بالدخول
 EMPLOYEES = {
@@ -79,7 +82,6 @@ EMPLOYEES = {
 # =========================
 @app.route("/tools/psn-check", methods=["GET", "POST"])
 def psn_check():
-    # تأكد أن الموظف مسجل دخول
     if not session.get("logged_in"):
         return redirect(url_for("index"))
 
@@ -101,7 +103,6 @@ def psn_check():
                 if not isinstance(data, dict):
                     error = "تعذر قراءة بيانات التقرير."
                 elif not data.get("ok", True):
-                    # رسالة واضحة من psn_service
                     error = data.get("message", "تعذر تحليل الحساب.")
                 else:
                     report = data
@@ -113,11 +114,10 @@ def psn_check():
 
 
 # =========
-# الصفحة الرئيسية (لوحة DEMAN)
+# الصفحة الرئيسية
 # =========
 @app.route("/")
 def index():
-    # هنا واجهة HTML اللي فيها فورم تسجيل الدخول + أزرار أدوات الفريق
     return render_template("index.html")
 
 
@@ -125,15 +125,10 @@ def index():
 # وظائف مساعدة
 # -------------
 def generate_code(length: int = 6) -> str:
-    """توليد كود رقمي بسيط للتحقق."""
     return "".join(random.choices(string.digits, k=length))
 
 
 def mask_email(email: str) -> str:
-    """
-    إخفاء الإيميل لعرضه في الواجهة.
-    مثال: a***@gmail.com
-    """
     try:
         local, domain = email.split("@")
         if len(local) <= 2:
@@ -146,7 +141,21 @@ def mask_email(email: str) -> str:
 
 
 def send_email_code(to_email: str, code: str, employee_name: str) -> None:
-    """إرسال كود التحقق على إيميل الموظف."""
+    """
+    إرسال كود التحقق على إيميل الموظف.
+    - على Render: بشكل افتراضي USE_SMTP=false → ما يرسل شيء، بس يطبع في اللوق.
+    - على جهازك: حط USE_SMTP=true في .env عشان يرسل فعليًا.
+    """
+    if not USE_SMTP:
+        logger.warning(
+            "[LOGIN CODE] SMTP معطّل (USE_SMTP=false) — الكود %s للبريد %s (الموظف: %s)",
+            code,
+            to_email,
+            employee_name,
+        )
+        # ما نسوي أي اتصال خارجي عشان ما يطيح الـ worker
+        return
+
     subject = "رمز الدخول إلى لوحة DEMAN"
     body = f"""
 يا {employee_name}،
@@ -166,15 +175,11 @@ def send_email_code(to_email: str, code: str, employee_name: str) -> None:
     msg["To"] = to_email
 
     context = ssl.create_default_context()
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls(context=context)
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-        logger.info("Login code sent to %s", to_email)
-    except Exception:
-        logger.exception("SMTP error while sending code to %s", to_email)
-        raise
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=SMTP_TIMEOUT) as server:
+        server.starttls(context=context)
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.send_message(msg)
+    logger.info("Login code sent to %s", to_email)
 
 
 # =====================
@@ -182,19 +187,16 @@ def send_email_code(to_email: str, code: str, employee_name: str) -> None:
 # =====================
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    # نقرأ JSON بأمان حتى لو كان فاضي
     data = request.get_json(silent=True) or {}
 
     email_raw = (data.get("email") or "")
     password_raw = (data.get("password") or "")
 
-    # تنظيف
     email = email_raw.strip().lower()
     password = password_raw.strip()
 
     logger.info("Login attempt: email=%r password_len=%d", email, len(password))
 
-    # ندوّر الموظف بدون ما نهتم بحالة الأحرف في الإيميل
     emp = None
     for k, v in EMPLOYEES.items():
         if k.lower() == email:
@@ -205,18 +207,14 @@ def api_login():
         logger.warning("Failed login attempt for email=%r", email)
         return jsonify(ok=False, message="بريد أو كلمة مرور غير صحيحة."), 401
 
-    # نخلي السيشن دائم (يمشي مع app.permanent_session_lifetime)
     session.permanent = True
 
-    # 🔹 فحص Cookie للجهاز الموثوق
     trusted_email = request.cookies.get("trusted_device_email")
     if trusted_email and trusted_email.lower() == email:
-        # دخول مباشر بدون كود
         session["logged_in"] = True
         session["user_email"] = email
         session["user_name"] = emp["name"]
 
-        # تنظيف أي محاولات سابقة معلّقة
         session.pop("pending_email", None)
         session.pop("pending_name", None)
         session.pop("pending_code", None)
@@ -228,7 +226,6 @@ def api_login():
             name=emp["name"],
         )
 
-    # 🔹 ما عنده جهاز موثوق: نرسل كود ونسجّله كـ pending
     code = generate_code()
     session["pending_email"] = email
     session["pending_name"] = emp["name"]
@@ -263,25 +260,22 @@ def api_verify_code():
         logger.warning("Wrong code for email=%s", pending_email)
         return jsonify(ok=False, message="الكود غير صحيح."), 400
 
-    # ✅ الكود صحيح → نسجّل الدخول
     session.permanent = True
     session["logged_in"] = True
     session["user_email"] = pending_email
     session["user_name"] = pending_name
 
-    # تنظيف بيانات المحاولة المؤقتة
     session.pop("pending_code", None)
     session.pop("pending_email", None)
     session.pop("pending_name", None)
 
     resp = make_response(jsonify(ok=True))
 
-    # لو اختار "تذكّر هذا الجهاز" نحط Cookie
     if remember_device:
         resp.set_cookie(
             "trusted_device_email",
             pending_email,
-            max_age=60 * 60 * 24 * 30,  # 30 يوم
+            max_age=60 * 60 * 24 * 30,
             httponly=True,
             samesite="Lax",
         )
@@ -295,14 +289,12 @@ def api_logout():
     user_email = session.get("user_email")
     session.clear()
     resp = make_response(jsonify(ok=True))
-    # نلغي Cookie الجهاز الموثوق
     resp.set_cookie("trusted_device_email", "", max_age=0)
     logger.info("Logout for %s", user_email)
     return resp
 
 
 if __name__ == "__main__":
-    # على Render يعطونك PORT في متغير البيئة
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
