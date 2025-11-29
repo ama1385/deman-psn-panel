@@ -3,6 +3,4 @@ requests
 python-dotenv
 psnawp-api
 gunicorn
-pip install flask psnawp-api requests urllib3
-
-
+urllib3
