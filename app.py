@@ -220,16 +220,14 @@ def api_verify_code():
 @app.route("/api/psn-analyze", methods=["POST"])
 def api_psn_analyze():
     """
-    تستقبل Online ID وترجع تقرير PSN كـ JSON.
-    تدعم JSON أو form-data وبأكثر من اسم متوقع للحقل.
+    تستقبل Online ID وترجع تقرير PSN كـ JSON + نص جاهز (message) للعرض في التكست إيريا.
     """
     if not session.get("logged_in"):
         return jsonify(ok=False, message="يجب تسجيل الدخول أولاً."), 401
 
-    # نحاول نقرأ JSON إن وجد
     data = request.get_json(silent=True) or {}
 
-    # نجرب أكثر من اسم، ومن JSON و من form
+    # نجرب كل الأسماء المحتملة للحقل + الفورم
     online_id = (
         (data.get("online_id")
          or data.get("onlineId")
@@ -256,9 +254,39 @@ def api_psn_analyze():
         if not isinstance(report, dict):
             return jsonify(ok=False, message="تعذر قراءة بيانات التقرير."), 500
 
+        # لو psn_service رجع ok=False (حساب غير موجود، رفض وصول، إلخ)
         if not report.get("ok", True):
-            # الرسالة الجاية من psn_service نفسها (الحساب غير موجود، رفض الوصول، ...)
             return jsonify(report), 400
+
+        # ===== تنسيق نص جاهز للتقرير =====
+        region_pretty = report.get("region_pretty") or "N/A"
+        presence = report.get("presence") or "N/A"
+        trophy_summary = report.get("trophy_summary") or "N/A"
+        titles_count = report.get("titles_count")
+        friends_total = report.get("friends_total")
+        friends_online_est = report.get("friends_online_est")
+        avatar_url = report.get("avatar_url") or "N/A"
+
+        lines = [
+            "نتيجة تحليل حساب PSN",
+            "--------------------------",
+            f"الأيدي: {report.get('online_id', online_id)}",
+            f"المنطقة (Region): {region_pretty}",
+            f"الحالة الآن (Presence): {presence}",
+            f"ملخص التروفيز: {trophy_summary}",
+            f"عدد الألعاب (Trophy Titles): {titles_count if titles_count is not None else 'N/A'}",
+            f"عدد الأصدقاء الكلّي: {friends_total if friends_total is not None else 'N/A'}",
+            f"أصدقاء أونلاين (تقديري): {friends_online_est if friends_online_est is not None else 'N/A'}",
+            "",
+            "رابط صورة الأفاتار:",
+            avatar_url,
+        ]
+
+        text_summary = "\n".join(lines)
+
+        # نضيف النص داخل نفس الرد عشان الواجهة تستخدمه
+        report["message"] = text_summary
+        report["ok"] = True
 
         return jsonify(report), 200
 
@@ -284,4 +312,5 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
 
