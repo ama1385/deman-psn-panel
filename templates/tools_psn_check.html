@@ -118,6 +118,12 @@
             border: 1px solid rgba(59, 130, 246, 0.7);
             color: #bfdbfe;
         }
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
         .report-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -168,13 +174,15 @@
             color: #6b7280;
             margin-top: 6px;
         }
-        .risk-pill {
+        .pill {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             font-size: 12px;
             padding: 4px 10px;
             border-radius: 999px;
+        }
+        .risk-pill {
             background: rgba(22, 163, 74, 0.16);
             border: 1px solid rgba(34, 197, 94, 0.6);
             color: #bbf7d0;
@@ -188,6 +196,33 @@
             background: rgba(239, 68, 68, 0.15);
             border-color: rgba(248, 113, 113, 0.8);
             color: #fee2e2;
+        }
+        .value-pill {
+            background: rgba(79, 70, 229, 0.18);
+            border: 1px solid rgba(129, 140, 248, 0.7);
+            color: #c7d2fe;
+        }
+        .activity-pill {
+            background: rgba(8, 47, 73, 0.5);
+            border: 1px solid rgba(56, 189, 248, 0.7);
+            color: #e0f2fe;
+        }
+        .section-title {
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        .small-muted {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .risk-flags-list {
+            padding-right: 18px;
+            margin: 6px 0 0;
+            font-size: 12px;
+            color: #e5e7eb;
+        }
+        .risk-flags-list li {
+            margin-bottom: 4px;
         }
     </style>
 </head>
@@ -217,6 +252,18 @@
     {% endif %}
 
     {% if report %}
+    {% set trophies = report.trophies or {} %}
+    {% set lvl = trophies.level %}
+    {% set total_trophies = trophies.total %}
+    {% set pt = trophies.platinum %}
+    {% set gd = trophies.gold %}
+    {% set sv = trophies.silver %}
+    {% set br = trophies.bronze %}
+    {% set value_segment = report.value_segment or "غير محدد" %}
+    {% set activity_segment = report.activity_segment or "غير محدد" %}
+    {% set risk_level = report.risk_level or "غير محدد" %}
+    {% set value_score = report.value_score %}
+
     <div class="report-card">
         <div class="report-header">
             {% if report.avatar_url %}
@@ -235,6 +282,29 @@
                 <div class="region-chip">
                     <span>الريجون:</span>
                     <span>{{ report.region_pretty or report.region }}</span>
+                </div>
+
+                <div class="status-row">
+                    <span class="pill value-pill">
+                        💰 قيمة الحساب: {{ value_segment }}
+                        {% if value_score is not none %}
+                            (Score: {{ value_score }})
+                        {% endif %}
+                    </span>
+
+                    <span class="pill activity-pill">
+                        🎮 نشاط الحساب: {{ activity_segment }}
+                    </span>
+
+                    {% if risk_level == "مرتفع" %}
+                        <span class="pill risk-pill-high">⚠️ مستوى المخاطر: {{ risk_level }}</span>
+                    {% elif risk_level == "متوسط" %}
+                        <span class="pill risk-pill-medium">🟡 مستوى المخاطر: {{ risk_level }}</span>
+                    {% elif risk_level == "منخفض" %}
+                        <span class="pill risk-pill">✅ مستوى المخاطر: {{ risk_level }}</span>
+                    {% else %}
+                        <span class="pill risk-pill">📎 مستوى المخاطر: {{ risk_level }}</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -258,6 +328,16 @@
             </div>
 
             <div>
+                <strong>الحالة الآن (Presence):</strong>
+                {{ report.presence or "غير متاح" }}
+            </div>
+
+            <div>
+                <strong>اللعبة الحالية:</strong>
+                {{ report.current_title or "لا توجد لعبة حالية أو مخفية" }}
+            </div>
+
+            <div>
                 <strong>عدد الألعاب (Titles):</strong>
                 {% if report.titles_count is not none %}
                     {{ report.titles_count }}
@@ -267,16 +347,34 @@
             </div>
 
             <div>
-                <strong>Trophy Summary:</strong>
+                <strong>ملخص التروفيز:</strong>
                 {{ report.trophy_summary or report.trophy_summary_text or "غير متاح" }}
             </div>
 
-            {% if report.presence %}
             <div>
-                <strong>الحالة الآن (Presence):</strong>
-                {{ report.presence }}
+                <strong>مستوى التروفي (Level):</strong>
+                {{ lvl if lvl is not none else "غير متاح" }}
             </div>
-            {% endif %}
+            <div>
+                <strong>إجمالي التروفيات:</strong>
+                {{ total_trophies if total_trophies is not none else "غير متاح" }}
+            </div>
+            <div>
+                <strong>بلاتينيوم:</strong>
+                {{ pt if pt is not none else "غير متاح" }}
+            </div>
+            <div>
+                <strong>ذهبي:</strong>
+                {{ gd if gd is not none else "غير متاح" }}
+            </div>
+            <div>
+                <strong>فضي:</strong>
+                {{ sv if sv is not none else "غير متاح" }}
+            </div>
+            <div>
+                <strong>برونزي:</strong>
+                {{ br if br is not none else "غير متاح" }}
+            </div>
 
             {% if report.friends_total is not none %}
             <div>
@@ -291,35 +389,43 @@
 
         <hr>
 
-        <h4>تقييم مبدئي للحساب (للاسترجاع والتسعير)</h4>
-        <p style="font-size:13px; color:#9ca3af; margin-top:4px; margin-bottom:8px;">
-            هذا التقييم يساعدك كعضو في فريق DEMAN في تحديد نوع الباقة، مدة التنفيذ، وحدود الضمان.
+        <h4 class="section-title">تقييم مبدئي للحساب (للاسترجاع والتسعير)</h4>
+        <p class="small-muted">
+            هذه الخلاصة تساعدك كعضو في فريق DEMAN في تحديد نوع الباقة، مدة التنفيذ، وحدود الضمان.
         </p>
 
-        {% set titles = report.titles_count or 0 %}
-        {% if titles >= 150 %}
-            <div class="risk-pill risk-pill-high">
-                ⚠️ حساب ثقيل جدًا – ألعاب كثيرة وقيمة عالية، يفضّل رفع السعر وزيادة الاحتياطات في التحقق من المالك.
+        {% if risk_level == "مرتفع" %}
+            <div class="pill risk-pill-high" style="margin-top:6px;">
+                ⚠️ حساب عالي القيمة وحساس. يفضّل رفع السعر، زيادة أسئلة التحقق، وعدم الاستعجال في القبول.
             </div>
-        {% elif titles >= 50 %}
-            <div class="risk-pill risk-pill-medium" style="margin-bottom:6px;">
-                🟡 حساب متوسط إلى قوي – مناسب لباقات متوسطة/عالية، مع تحقق إضافي من بيانات العميل.
+        {% elif risk_level == "متوسط" %}
+            <div class="pill risk-pill-medium" style="margin-top:6px;">
+                🟡 حساب متوسط المخاطر. مناسب لباقات متوسطة مع تحقق واضح من بيانات المالك.
             </div>
         {% else %}
-            <div class="risk-pill" style="margin-bottom:6px;">
-                ✅ حساب خفيف – مناسب للباقات السريعة / الاقتصادية، المخاطرة أقل عادة.
+            <div class="pill risk-pill" style="margin-top:6px;">
+                ✅ حساب مخاطر منخفضة حسب المعطيات الظاهرة. مناسب للباقات السريعة والاقتصادية.
             </div>
+        {% endif %}
+
+        {% if report.risk_flags %}
+            <p class="small-muted" style="margin-top:10px;">ملاحظات إضافية رُصدت أثناء التحليل:</p>
+            <ul class="risk-flags-list">
+                {% for flag in report.risk_flags %}
+                    <li>{{ flag }}</li>
+                {% endfor %}
+            </ul>
         {% endif %}
 
         <hr>
 
-        <h4>ملاحظات تشغيلية للفريق</h4>
+        <h4 class="section-title">ملاحظات تشغيلية للفريق</h4>
         <ul class="notes-list">
-            <li>استخدم الريجون لتحديد مسار التواصل مع دعم سوني (مثلاً: SA / US / EU) والتأكد من توافق بيانات العميل مع الدولة.</li>
-            <li>عدد الألعاب والتروفي يعطي مؤشر على قيمة الحساب عند العميل، وقابلية قبوله للسعر الأعلى.</li>
-            <li>في الحسابات الثقيلة (Titles كثيرة + تروفي عالي) ركّز على أسئلة التحقق من الملكية قبل أي محاولة استرجاع.</li>
-            <li>قارن أونلاين/أوفلاين (Presence) مع كلام العميل (يقول "لي سنين ما دخلت" وحسابه أونلاين مؤخرًا؟ هنا يبدأ الشك).</li>
-            <li>قارن هذه البيانات مع إجابات العميل في نموذج الاسترجاع قبل قبول الطلب أو تحديد الباقة المناسبة.</li>
+            <li>استخدم الريجون في تطابق بيانات العميل مع دولة الحساب قبل أي خطوة استرجاع.</li>
+            <li>التروفيز وعدد الألعاب يعطي مؤشر على قيمة الحساب عند صاحبه وقابليته لرفع السعر.</li>
+            <li>في الحسابات الثقيلة ركّز على أسئلة التحقق من الملكية وتاريخ الاستخدام وتفاصيل الشراء.</li>
+            <li>راقب حالة الأونلاين الفعلية مع كلام العميل؛ التناقضات تعطي إنذار مبكر.</li>
+            <li>قارن كل هذه البيانات مع نموذج الاسترجاع قبل تحديد الباقة ومدة التنفيذ والضمان.</li>
         </ul>
     </div>
     {% endif %}
