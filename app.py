@@ -302,50 +302,108 @@ def api_psn_analyze():
 
         current_title = report.get("current_title") or "لا توجد لعبة حالية أو مخفية"
 
-        # ===== تنسيق نص جاهز للتقرير =====
+        # ===== تنسيق نص جاهز ومفيد للتقرير =====
+
+        # تنظيف عرض المنطقة (لو طلع رقم غريب)
+        region_display_raw = region_pretty or report.get("region") or "غير محددة"
+        if any(ch.isdigit() for ch in region_display_raw) and len(region_display_raw) > 6:
+            region_display = "غير محددة (مشكلة في قراءة المنطقة من سوني)"
+        else:
+            region_display = region_display_raw
+
+        # تطبيع الحقول اللي تطلع unknown / None
+        presence_display = presence
+        if not presence_display or presence_display == "unknown":
+            presence_display = "غير ظاهر (غالبًا مخفي/أوفلاين)"
+
+        activity_display = activity_segment or "غير محدد"
+        value_display = value_segment or "غير محدد"
+        risk_display = risk_level or "غير محدد"
+
+        # جملة ملخص سريعة
+        header_line = f"القيمة: {value_display} | النشاط: {activity_display} | المخاطر: {risk_display}"
+
+        # هل الحساب يستاهل التعب؟ (تقدير عام)
+        if "عالي" in value_display:
+            worth_line = "التقييم: الحساب يستاهل تعب الاسترجاع، اعتبره من الفئة القوية."
+        elif "متوسط" in value_display:
+            worth_line = "التقييم: حساب متوسط، مناسب لعروض سعر متوسطة، مو نادر ولا ضعيف."
+        else:
+            worth_line = "التقييم: حساب قيمته ضعيفة، لا تبالغ مع العميل في الوعود أو السعر."
+
+        # ملاحظات إضافية بناءً على النشاط والمخاطر
+        notes_lines = []
+        if "ضعيف" in activity_display or "جديد" in activity_display:
+            notes_lines.append("⚠ النشاط ضعيف/جديد: احتمال يرجع بسهولة لكن ما يعطيك تاريخ طويل أو تروفيز قوية.")
+        if "عالي" in risk_display or "مرتفع" in risk_display:
+            notes_lines.append("⚠ مخاطر عالية: انتبه قبل ما تعِد بنسبة نجاح كبيرة أو تربط ضمان قوي.")
+        if "منخفض" in risk_display:
+            notes_lines.append("✅ المخاطر منخفضة: الحساب آمن نسبيًا من ناحية باند/مشاكل ظاهرة.")
+
+        if not notes_lines:
+            notes_lines.append("لا توجد ملاحظات تحليلية إضافية مهمة من ناحية النشاط/المخاطر.")
+
+        # تجهيز نص التروفيز
+        lvl_display = lvl if lvl is not None else "غير متوفر (سوني ما رجعت المستوى)"
+        total_display = total_trophies if total_trophies is not None else "غير متوفر (بيانات ناقصة)"
+        pt_display = pt if pt is not None else 0
+        gd_display = gd if gd is not None else 0
+        sv_display = sv if sv is not None else 0
+        br_display = br if br is not None else 0
+
+        titles_display = titles_count if titles_count is not None else "غير متوفر"
+        friends_total_display = friends_total if friends_total is not None else "غير متوفر (قائمة أصدقاء خاصة؟)"
+        friends_online_display = friends_online_est if friends_online_est is not None else "غير متوفر"
+
         lines = [
-            "نتيجة تحليل حساب PSN - فريق DEMAN",
+            "🔰 تقرير مختصر لحساب PSN - فريق DEMAN",
             "------------------------------------",
             f"الأيدي: {report.get('online_id', online_id)}",
-            f"المنطقة (Region): {region_pretty}",
+            f"المنطقة (Region): {region_display}",
+            "",
+            f"ملخص سريع: {header_line}",
+            worth_line,
             "",
             "🔹 حالة الحساب الآن:",
-            f"- الحالة (Presence): {presence}",
+            f"- الحالة الحالية: {presence_display}",
             f"- اللعبة الحالية: {current_title}",
             "",
-            "🔹 التروفيز (Trophies):",
+            "🔹 الأرقام الأساسية:",
+            f"- عدد الألعاب (Trophy Titles): {titles_display}",
+            f"- عدد الأصدقاء الكلي: {friends_total_display}",
+            f"- أصدقاء أونلاين (تقديري): {friends_online_display}",
+            "",
+            "🔹 التروفيز (إن توفرت بياناتها):",
             f"- الملخص: {trophy_summary}",
-            f"- المستوى (Level): {lvl if lvl is not None else 'N/A'}",
-            f"- إجمالي التروفيات: {total_trophies if total_trophies is not None else 'N/A'}",
-            f"- بلاتينيوم: {pt if pt is not None else 'N/A'}",
-            f"- ذهبي: {gd if gd is not None else 'N/A'}",
-            f"- فضي: {sv if sv is not None else 'N/A'}",
-            f"- برونزي: {br if br is not None else 'N/A'}",
+            f"- المستوى (Level): {lvl_display}",
+            f"- إجمالي التروفيز: {total_display}",
+            f"- بلاتينيوم: {pt_display}",
+            f"- ذهبي: {gd_display}",
+            f"- فضي: {sv_display}",
+            f"- برونزي: {br_display}",
             "",
-            "🔹 الألعاب والأصدقاء:",
-            f"- عدد الألعاب (Trophy Titles): {titles_count if titles_count is not None else 'N/A'}",
-            f"- عدد الأصدقاء الكلّي: {friends_total if friends_total is not None else 'N/A'}",
-            f"- أصدقاء أونلاين (تقديري): {friends_online_est if friends_online_est is not None else 'N/A'}",
+            "🔹 تقييم القيمة والنشاط والمخاطر:",
+            f"- القيمة التقديرية: {value_display}",
+            f"- نشاط الحساب: {activity_display}",
+            f"- مستوى المخاطر: {risk_display}",
             "",
-            "🔹 تقييم قيمة الحساب (Value):",
-            f"- القيمة التقديرية (Segment): {value_segment}",
-            f"- درجة داخلية (Score): {value_score if value_score is not None else 'N/A'}",
-            f"- نشاط الحساب: {activity_segment}",
-            "",
-            "🔹 تحليل المخاطر (Risk):",
-            f"- مستوى المخاطر: {risk_level}",
+            "ملاحظات الفريق على هذا الحساب:",
         ]
 
+        lines.extend(notes_lines)
+
+        # ملاحظات المخاطر التفصيلية إن وجدت
         if risk_flags:
-            lines.append("- ملاحظات المخاطر:")
+            lines.append("")
+            lines.append("🔹 تفاصيل إضافية عن المخاطر:")
             for flag in risk_flags:
                 lines.append(f"  • {flag}")
 
         lines.extend(
             [
                 "",
-                "🔹 رابط صورة الأفاتار:",
-                avatar_url,
+                "🔹 رابط صورة الأفاتار (للاستخدام مع العميل أو للأرشفة):",
+                avatar_url or "N/A",
             ]
         )
 
@@ -363,6 +421,7 @@ def api_psn_analyze():
             ok=False,
             message="حدث خطأ غير متوقع أثناء تحليل الحساب."
         ), 500
+
 
 
 # =====================
@@ -385,3 +444,4 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
