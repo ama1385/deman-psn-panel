@@ -2519,15 +2519,16 @@
   }
 
   // تحليل حساب PSN
+    // تحليل حساب PSN
   const psnBtn = document.getElementById("psnAnalyzeBtn");
   const psnInput = document.getElementById("psnIdInput");
   const psnResultBox = document.getElementById("psnResultBox");
 
   if (psnBtn && psnInput && psnResultBox) {
     psnBtn.addEventListener("click", async () => {
-      const psnId = psnInput.value.trim();
-      if (!psnId) {
-        alert("رجاءً أدخل الأيدي (ID) أولاً.");
+      const onlineId = psnInput.value.trim();
+      if (!onlineId) {
+        alert("رجاءً أدخل الأيدي (Online ID) أولاً.");
         return;
       }
 
@@ -2537,45 +2538,72 @@
         const res = await fetch("/api/psn-analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ psn_id: psnId })
+          // هنا أهم نقطة: نرسل online_id
+          body: JSON.stringify({ online_id: onlineId })
         });
 
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok || !data.ok) {
           psnResultBox.value =
-            (data.message || "تعذر تحليل الحساب، تأكد من الـ ID أو جرّب لاحقاً.");
+            data.message ||
+            "تعذر تحليل الحساب، تأكد من الـ Online ID أو جرّب لاحقاً.";
           return;
         }
 
+        // لو الباك إند يرجّع رسالة جاهزة، استخدمها مباشرة
+        if (data.message) {
+          psnResultBox.value = data.message;
+          return;
+        }
+
+        // احتياط: بناء نص يدوي من الحقول لو ما فيه message
         const lines = [];
         lines.push("نتيجة تحليل حساب PSN");
         lines.push("--------------------------");
-        lines.push("الأيدي: " + psnId);
-        if (data.region) lines.push("الريجن: " + data.region);
-        if (data.trophies_total != null)
-          lines.push("إجمالي التروفيز: " + data.trophies_total);
-        if (data.last_game)
-          lines.push("آخر لعبة: " + data.last_game);
-        if (data.created_at)
-          lines.push("تاريخ إنشاء الحساب (تقديري): " + data.created_at);
+        lines.push("الأيدي: " + (data.online_id || onlineId));
+
+        if (data.region_pretty || data.region) {
+          lines.push("الريجن: " + (data.region_pretty || data.region));
+        }
+
+        if (data.trophy_summary) {
+          lines.push("ملخص التروفيز: " + data.trophy_summary);
+        }
+
+        if (data.titles_count != null) {
+          lines.push("عدد الألعاب (تروفي): " + data.titles_count);
+        }
+
+        if (data.friends_total != null) {
+          lines.push("عدد الأصدقاء الكلي: " + data.friends_total);
+        }
+
+        if (data.friends_online_est != null) {
+          lines.push("أصدقاء أونلاين (تقديري): " + data.friends_online_est);
+        }
+
+        if (data.last_played) {
+          lines.push("آخر لعبة / نشاط: " + data.last_played);
+        }
+
         if (data.notes) {
           lines.push("");
           lines.push("ملاحظات:");
           lines.push(data.notes);
         }
 
-        if (!lines.length) {
-          psnResultBox.value = "تم التحليل لكن ما رجعت بيانات مفيدة من السيرفر.";
-        } else {
-          psnResultBox.value = lines.join("\n");
-        }
+        psnResultBox.value =
+          lines.length > 0
+            ? lines.join("\n")
+            : "تم التحليل لكن ما رجعت بيانات مفيدة من السيرفر.";
       } catch (err) {
         console.error(err);
         psnResultBox.value = "خطأ في الاتصال بالسيرفر أثناء تحليل الحساب.";
       }
     });
   }
+
 
   // INIT
   loadState();
@@ -2586,3 +2614,4 @@
 </script>
 </body>
 </html>
+
