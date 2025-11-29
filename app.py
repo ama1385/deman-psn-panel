@@ -221,6 +221,8 @@ def api_verify_code():
 def api_psn_analyze():
     """
     تستقبل Online ID وترجع تقرير PSN كـ JSON + نص جاهز (message) للعرض في التكست إيريا.
+    الحين النسخة هذه تستخدم البيانات التحليلية الجديدة من psn_service:
+    - value_segment, activity_segment, risk_level, risk_flags, trophies ...
     """
     if not session.get("logged_in"):
         return jsonify(ok=False, message="يجب تسجيل الدخول أولاً."), 401
@@ -258,7 +260,7 @@ def api_psn_analyze():
         if not report.get("ok", True):
             return jsonify(report), 400
 
-        # ===== تنسيق نص جاهز للتقرير =====
+        # ===== تجهيز القيم اللي بنعرضها =====
         region_pretty = report.get("region_pretty") or "N/A"
         presence = report.get("presence") or "N/A"
         trophy_summary = report.get("trophy_summary") or "N/A"
@@ -267,20 +269,70 @@ def api_psn_analyze():
         friends_online_est = report.get("friends_online_est")
         avatar_url = report.get("avatar_url") or "N/A"
 
+        # القيم التحليلية الجديدة
+        value_score = report.get("value_score")
+        value_segment = report.get("value_segment") or "غير محدد"
+        activity_segment = report.get("activity_segment") or "غير محدد"
+        risk_level = report.get("risk_level") or "غير محدد"
+        risk_flags = report.get("risk_flags") or []
+
+        # تفاصيل التروفيات كأرقام
+        trophies = report.get("trophies") or {}
+        lvl = trophies.get("level")
+        pt = trophies.get("platinum")
+        gd = trophies.get("gold")
+        sv = trophies.get("silver")
+        br = trophies.get("bronze")
+        total_trophies = trophies.get("total")
+
+        current_title = report.get("current_title") or "لا توجد لعبة حالية أو مخفية"
+
+        # ===== تنسيق نص جاهز للتقرير =====
         lines = [
-            "نتيجة تحليل حساب PSN",
-            "--------------------------",
+            "نتيجة تحليل حساب PSN - فريق DEMAN",
+            "------------------------------------",
             f"الأيدي: {report.get('online_id', online_id)}",
             f"المنطقة (Region): {region_pretty}",
-            f"الحالة الآن (Presence): {presence}",
-            f"ملخص التروفيز: {trophy_summary}",
-            f"عدد الألعاب (Trophy Titles): {titles_count if titles_count is not None else 'N/A'}",
-            f"عدد الأصدقاء الكلّي: {friends_total if friends_total is not None else 'N/A'}",
-            f"أصدقاء أونلاين (تقديري): {friends_online_est if friends_online_est is not None else 'N/A'}",
             "",
-            "رابط صورة الأفاتار:",
-            avatar_url,
+            "🔹 حالة الحساب الآن:",
+            f"- الحالة (Presence): {presence}",
+            f"- اللعبة الحالية: {current_title}",
+            "",
+            "🔹 التروفيز (Trophies):",
+            f"- الملخص: {trophy_summary}",
+            f"- المستوى (Level): {lvl if lvl is not None else 'N/A'}",
+            f"- إجمالي التروفيات: {total_trophies if total_trophies is not None else 'N/A'}",
+            f"- بلاتينيوم: {pt if pt is not None else 'N/A'}",
+            f"- ذهبي: {gd if gd is not None else 'N/A'}",
+            f"- فضي: {sv if sv is not None else 'N/A'}",
+            f"- برونزي: {br if br is not None else 'N/A'}",
+            "",
+            "🔹 الألعاب والأصدقاء:",
+            f"- عدد الألعاب (Trophy Titles): {titles_count if titles_count is not None else 'N/A'}",
+            f"- عدد الأصدقاء الكلّي: {friends_total if friends_total is not None else 'N/A'}",
+            f"- أصدقاء أونلاين (تقديري): {friends_online_est if friends_online_est is not None else 'N/A'}",
+            "",
+            "🔹 تقييم قيمة الحساب (Value):",
+            f"- القيمة التقديرية (Segment): {value_segment}",
+            f"- درجة داخلية (Score): {value_score if value_score is not None else 'N/A'}",
+            f"- نشاط الحساب: {activity_segment}",
+            "",
+            "🔹 تحليل المخاطر (Risk):",
+            f"- مستوى المخاطر: {risk_level}",
         ]
+
+        if risk_flags:
+            lines.append("- ملاحظات المخاطر:")
+            for flag in risk_flags:
+                lines.append(f"  • {flag}")
+
+        lines.extend(
+            [
+                "",
+                "🔹 رابط صورة الأفاتار:",
+                avatar_url,
+            ]
+        )
 
         text_summary = "\n".join(lines)
 
@@ -297,7 +349,6 @@ def api_psn_analyze():
             message="حدث خطأ غير متوقع أثناء تحليل الحساب."
         ), 500
 
-
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
     user_email = session.get("user_email")
@@ -312,5 +363,6 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
 
 
