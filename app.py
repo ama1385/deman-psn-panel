@@ -76,13 +76,36 @@ EMPLOYEES = {
 }
 
 
+# =========
+# الصفحة الرئيسية + صفحة الداشبورد
+# =========
+
+@app.route("/")
+def index():
+    """
+    نخلي الصفحة الرئيسية تحوّل مباشرة للوحة DEMAN Panel،
+    والواجهة نفسها (panel.html) فيها شاشة الدخول + الداشبورد.
+    """
+    return redirect(url_for("panel"))
+
+
+@app.route("/panel")
+def panel():
+    """
+    هذه هي صفحة الداشبورد الجديدة اللي أرسلت HTML حقها.
+    لازم تكون محفوظة باسم templates/panel.html
+    """
+    return render_template("panel.html")
+
+
 # =========================
-# صفحة فحص حساب PSN بالفريق (نسخة HTML تقليدية)
+# صفحة فحص حساب PSN (نسخة HTML قديمة – اختياري)
 # =========================
 @app.route("/tools/psn-check", methods=["GET", "POST"])
 def psn_check():
+    # لو تبي تمنع الاستخدام بدون تسجيل دخول:
     if not session.get("logged_in"):
-        return redirect(url_for("index"))
+        return redirect(url_for("panel"))
 
     report = None
     error = None
@@ -112,17 +135,7 @@ def psn_check():
     return render_template("tools_psn_check.html", report=report, error=error)
 
 
-# =========
-# الصفحة الرئيسية
-# =========
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-
-# -------------
-# وظائف مساعدة
-# -------------
+# ------------- وظائف مساعدة -------------
 def generate_code(length: int = 6) -> str:
     return "".join(random.choices(string.digits, k=length))
 
@@ -205,12 +218,16 @@ def api_login():
         ok=True,
         skip_code=True,   # عشان الواجهة تعرف إن ما فيه خطوة كود
         name=emp["name"],
+        masked_email=mask_email(email),
     )
 
 
 @app.route("/api/verify-code", methods=["POST"])
 def api_verify_code():
-    # بما إن الدخول مباشر، نخلي هذه النهاية ترجع رسالة واضحة
+    """
+    بما إنك مفعّل الدخول المباشر (skip_code=True)
+    الواجهة ما راح تستدعي هذا المسار غالباً، بس نخليه يرجع رسالة واضحة.
+    """
     return jsonify(ok=False, message="تم تفعيل الدخول المباشر بدون كود تحقق."), 400
 
 
@@ -221,8 +238,6 @@ def api_verify_code():
 def api_psn_analyze():
     """
     تستقبل Online ID وترجع تقرير PSN كـ JSON + نص جاهز (message) للعرض في التكست إيريا.
-    الحين النسخة هذه تستخدم البيانات التحليلية الجديدة من psn_service:
-    - value_segment, activity_segment, risk_level, risk_flags, trophies ...
     """
     if not session.get("logged_in"):
         return jsonify(ok=False, message="يجب تسجيل الدخول أولاً."), 401
@@ -349,6 +364,10 @@ def api_psn_analyze():
             message="حدث خطأ غير متوقع أثناء تحليل الحساب."
         ), 500
 
+
+# =====================
+# API لتسجيل الخروج
+# =====================
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
     user_email = session.get("user_email")
@@ -359,10 +378,10 @@ def api_logout():
     return resp
 
 
+# =====================
+# نقطة تشغيل التطبيق
+# =====================
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
-
-
-
