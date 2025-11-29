@@ -19,23 +19,16 @@ from flask import (
     url_for,
 )
 
-from dotenv import load_dotenv
-
 from psn_service import get_account_report  # دالة فحص حساب PSN (باستخدام NPSSO الفريق)
 
 # =============================
-# تحميل المتغيرات من ملف .env
-# =============================
-load_dotenv()
-
-# -----------------------------
 # إعداد اللوقنغ
-# -----------------------------
+# =============================
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
-logger = logging.getLogger("emiRdjV5igMsmrfukmJpzluip8ucmSNwiin5aiJCQ1Z33bq6WR2eiJZPt0ttrWtr")
+logger = logging.getLogger("deman-psn-panel")
 
 # -----------------------------
 # إعداد تطبيق Flask
@@ -46,22 +39,28 @@ app = Flask(
     static_folder="static",
 )
 
-# NPSSO الخاص بفريق DEMAN (تحطه في ملف .env)
-DEMANTEAM_NPSSO = os.getenv("DEMAN_TEAM_NPSSO")
+# =============================
+# إعداد القيم الثابتة (بدون .env)
+# =============================
+
+# NPSSO الخاص بفريق DEMAN
+DEMANTEAM_NPSSO = "emiRdjV5igMsmrfukmJpzluip8ucmSNwiin5aiJCQ1Z33bq6WR2eiJZPt0ttrWtr"
 
 # سر الجلسة
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "CHANGE_ME_TO_RANDOM_SECRET_KEY")
+app.secret_key = "qqww1122asd"
+
+# مدة الجلسة
 app.permanent_session_lifetime = timedelta(days=7)
 
 # إعدادات SMTP (إيميل جنى)
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
-SMTP_USER = os.getenv("SMTP_USER", "jana123216@gmail.com")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "CHANGE_ME_SMTP_APP_PASSWORD")
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = "jana123216@gmail.com"
+SMTP_PASSWORD = "jror yolk axwd sufc"  # app password
 
 # تشغيل/إيقاف الإرسال الحقيقي للإيميل
-USE_SMTP = os.getenv("USE_SMTP", "false").lower() == "true"
-SMTP_TIMEOUT = float(os.getenv("SMTP_TIMEOUT", "10"))
+USE_SMTP = False  # خله False الآن عشان ما يسبب مشاكل على Render
+SMTP_TIMEOUT = 10.0
 
 # الموظفين المصرّح لهم بالدخول
 EMPLOYEES = {
@@ -94,8 +93,8 @@ def psn_check():
             error = "رجاءً اكتب Online ID."
         else:
             try:
-                if not DEMANTEAM_NPSSO:
-                    raise RuntimeError("NPSSO الخاص بالفريق غير مضبوط في .env")
+                if not DEMANTEAM_NPSSO or len(DEMANTEAM_NPSSO) < 40:
+                    raise RuntimeError("NPSSO الخاص بالفريق غير مضبوط أو غير صالح.")
 
                 logger.info("Request PSN report for online_id=%s", online_id)
                 data = get_account_report(online_id, DEMANTEAM_NPSSO)
@@ -143,17 +142,15 @@ def mask_email(email: str) -> str:
 def send_email_code(to_email: str, code: str, employee_name: str) -> None:
     """
     إرسال كود التحقق على إيميل الموظف.
-    - على Render: بشكل افتراضي USE_SMTP=false → ما يرسل شيء، بس يطبع في اللوق.
-    - على جهازك: حط USE_SMTP=true في .env عشان يرسل فعليًا.
+    إذا USE_SMTP=False → ما يرسل فعليًا، بس يطبع في اللوق.
     """
     if not USE_SMTP:
         logger.warning(
-            "[LOGIN CODE] SMTP معطّل (USE_SMTP=false) — الكود %s للبريد %s (الموظف: %s)",
+            "[LOGIN CODE] SMTP معطّل (USE_SMTP=False) — الكود %s للبريد %s (الموظف: %s)",
             code,
             to_email,
             employee_name,
         )
-        # ما نسوي أي اتصال خارجي عشان ما يطيح الـ worker
         return
 
     subject = "رمز الدخول إلى لوحة DEMAN"
@@ -196,13 +193,13 @@ def api_login():
         logger.warning("Failed login attempt for email=%s", email)
         return jsonify(ok=False, message="بريد أو كلمة مرور غير صحيحة."), 401
 
-    # 🔥 هنا الدخول المباشر بدون SMTP ولا كود تحقق
+    # 🔥 دخول مباشر بدون SMTP ولا كود تحقق
     session.permanent = True
     session["logged_in"] = True
     session["user_email"] = email
     session["user_name"] = emp["name"]
 
-    logger.info("Direct login (no SMTP) for %s", email)
+    logger.info("Direct login (no SMTP, no code) for %s", email)
 
     return jsonify(
         ok=True,
@@ -210,62 +207,11 @@ def api_login():
         name=emp["name"],
     )
 
-    code = generate_code()
-    session["pending_email"] = email
-    session["pending_name"] = emp["name"]
-    session["pending_code"] = code
-
-    try:
-        send_email_code(email, code, emp["name"])
-    except Exception:
-        logger.exception("Failed to send login code to %s", email)
-        return jsonify(ok=False, message="فشل إرسال الكود على الإيميل."), 500
-
-    return jsonify(
-        ok=True,
-        masked_email=mask_email(email),
-    )
-
 
 @app.route("/api/verify-code", methods=["POST"])
 def api_verify_code():
-    data = request.get_json() or {}
-    code = (data.get("code") or "").strip()
-    remember_device = bool(data.get("remember_device"))
-
-    pending_code = session.get("pending_code")
-    pending_email = session.get("pending_email")
-    pending_name = session.get("pending_name")
-
-    if not pending_code or not pending_email:
-        return jsonify(ok=False, message="لا يوجد طلب تسجيل دخول نشط."), 400
-
-    if code != pending_code:
-        logger.warning("Wrong code for email=%s", pending_email)
-        return jsonify(ok=False, message="الكود غير صحيح."), 400
-
-    session.permanent = True
-    session["logged_in"] = True
-    session["user_email"] = pending_email
-    session["user_name"] = pending_name
-
-    session.pop("pending_code", None)
-    session.pop("pending_email", None)
-    session.pop("pending_name", None)
-
-    resp = make_response(jsonify(ok=True))
-
-    if remember_device:
-        resp.set_cookie(
-            "trusted_device_email",
-            pending_email,
-            max_age=60 * 60 * 24 * 30,
-            httponly=True,
-            samesite="Lax",
-        )
-        logger.info("Device marked as trusted for %s", pending_email)
-
-    return resp
+    # بما إن الدخول مباشر، نخلي هذه النهاية ترجع رسالة واضحة
+    return jsonify(ok=False, message="تم تفعيل الدخول المباشر بدون كود تحقق."), 400
 
 
 @app.route("/api/logout", methods=["POST"])
@@ -282,5 +228,3 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
-
-
