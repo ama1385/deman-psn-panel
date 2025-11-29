@@ -221,13 +221,27 @@ def api_verify_code():
 def api_psn_analyze():
     """
     تستقبل Online ID وترجع تقرير PSN كـ JSON.
-    هذي اللي تستخدمها الواجهة الأمامية في الزر "تحليل الحساب الآن".
+    تدعم JSON أو form-data وبأكثر من اسم متوقع للحقل.
     """
     if not session.get("logged_in"):
         return jsonify(ok=False, message="يجب تسجيل الدخول أولاً."), 401
 
-    data = request.get_json() or {}
-    online_id = (data.get("online_id") or "").strip()
+    # نحاول نقرأ JSON إن وجد
+    data = request.get_json(silent=True) or {}
+
+    # نجرب أكثر من اسم، ومن JSON و من form
+    online_id = (
+        (data.get("online_id")
+         or data.get("onlineId")
+         or data.get("psn_id")
+         or data.get("psnId")
+         or request.form.get("online_id")
+         or request.form.get("onlineId")
+         or request.form.get("psn_id")
+         or request.form.get("psnId")
+         or "")
+        .strip()
+    )
 
     if not online_id:
         return jsonify(ok=False, message="رجاءً اكتب Online ID."), 400
@@ -242,12 +256,10 @@ def api_psn_analyze():
         if not isinstance(report, dict):
             return jsonify(ok=False, message="تعذر قراءة بيانات التقرير."), 500
 
-        # لو الدالة رجعت ok=False نخلي الرسالة تمر كما هي
         if not report.get("ok", True):
-            # نخلي الواجهة تشوف الرسالة وتعرضها
+            # الرسالة الجاية من psn_service نفسها (الحساب غير موجود، رفض الوصول، ...)
             return jsonify(report), 400
 
-        # نجاح: نرجع الدكت كامل
         return jsonify(report), 200
 
     except Exception:
@@ -272,3 +284,4 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
