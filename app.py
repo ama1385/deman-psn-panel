@@ -182,9 +182,11 @@ def send_email_code(to_email: str, code: str, employee_name: str) -> None:
 # =====================
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    data = request.get_json() or {}
+    # ⬅ هنا التعديل المهم
+    data = request.get_json(silent=True) or request.form or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
+
 
     emp = EMPLOYEES.get(email)
     if not emp or emp.get("password") != password:
@@ -290,3 +292,4 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))  # Railway يعطيك PORT من البيئة
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
