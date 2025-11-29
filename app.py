@@ -42,9 +42,10 @@ logger = logging.getLogger("deman-psn-panel")
 # -----------------------------
 app = Flask(
     __name__,
-    template_folder="public/templates",  # هنا index.html و tools_psn_check.html
-    static_folder="public"               # لو حطّيت ملفات ثابتة (صور، JS، CSS) مستقبلاً
+    template_folder="templates",  # المجلد اللي فيه index.html و tools_psn_check.html
+    static_folder=None           # خليه None حالياً، نضبط static بعدين لو احتجناه
 )
+
 
 # NPSSO الخاص بفريق DEMAN (تحطه في ملف .env)
 DEMANTEAM_NPSSO = os.getenv("DEMAN_TEAM_NPSSO")
