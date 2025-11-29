@@ -237,7 +237,9 @@ def api_verify_code():
 @app.route("/api/psn-analyze", methods=["POST"])
 def api_psn_analyze():
     """
-    تستقبل Online ID وترجع تقرير PSN كـ JSON + نص جاهز (message) للعرض في التكست إيريا.
+    تستقبل Online ID وترجع تقرير PSN كـ JSON:
+    - message: تقرير داخلي مفصل
+    - client_message: نص مختصر جاهز للعميل
     """
     if not session.get("logged_in"):
         return jsonify(ok=False, message="يجب تسجيل الدخول أولاً."), 401
@@ -355,6 +357,7 @@ def api_psn_analyze():
         friends_total_display = friends_total if friends_total is not None else "غير متوفر (قائمة أصدقاء خاصة؟)"
         friends_online_display = friends_online_est if friends_online_est is not None else "غير متوفر"
 
+        # ===== تقرير داخلي مفصل =====
         lines = [
             "🔰 تقرير مختصر لحساب PSN - فريق DEMAN",
             "------------------------------------",
@@ -409,8 +412,32 @@ def api_psn_analyze():
 
         text_summary = "\n".join(lines)
 
+        # ===== نص مختصر جاهز للعميل =====
+        client_message_lines = [
+            f"تحليل مبدئي لحساب PSN: {report.get('online_id', online_id)}",
+            f"- المنطقة المتوقعة: {region_display}",
+            f"- تقييم القيمة: {value_display}",
+            f"- نشاط الحساب: {activity_display}",
+            f"- مستوى المخاطر: {risk_display}",
+            f"- عدد الألعاب المرتبطة بالتروفيز: {titles_display}",
+        ]
+
+        if isinstance(lvl_display, (int, float)) or str(lvl_display).isdigit():
+            client_message_lines.append(f"- مستوى التروفي تقريبًا: {lvl_display}")
+        else:
+            client_message_lines.append("- ما قدرنا نقرأ مستوى التروفي بدقة من سوني.")
+
+        client_message_lines.append("")
+        client_message_lines.append(
+            "بناءً على هذه البيانات نقدر نحدد لك عرض استرجاع مناسب، "
+            "مع مراعاة قيمة الحساب ونسبة المخاطر."
+        )
+
+        client_message = "\n".join(client_message_lines)
+
         # نضيف النص داخل نفس الرد عشان الواجهة تستخدمه
-        report["message"] = text_summary
+        report["message"] = text_summary          # تقرير داخلي
+        report["client_message"] = client_message  # نص مختصر للعميل
         report["ok"] = True
 
         return jsonify(report), 200
@@ -444,4 +471,5 @@ if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
+
 
