@@ -40,12 +40,12 @@ logger = logging.getLogger("deman-psn-panel")
 # -----------------------------
 # إعداد تطبيق Flask
 # -----------------------------
+# على Render: ملفات القوالب في مجلد /templates بجانب app.py
 app = Flask(
     __name__,
-    template_folder="templates",  # المجلد اللي فيه index.html و tools_psn_check.html
-    static_folder=None           # خليه None حالياً، نضبط static بعدين لو احتجناه
+    template_folder="templates",
+    static_folder="static",  # لو حطّيت CSS/JS/صور لاحقاً
 )
-
 
 # NPSSO الخاص بفريق DEMAN (تحطه في ملف .env)
 DEMANTEAM_NPSSO = os.getenv("DEMAN_TEAM_NPSSO")
@@ -105,7 +105,7 @@ def psn_check():
                     error = data.get("message", "تعذر تحليل الحساب.")
                 else:
                     report = data
-            except Exception as e:
+            except Exception:
                 logger.exception("Error while generating PSN report")
                 error = "حدث خطأ غير متوقع أثناء تحليل الحساب."
 
@@ -117,7 +117,7 @@ def psn_check():
 # =========
 @app.route("/")
 def index():
-    # هنا تحط واجهة HTML اللي فيها فورم تسجيل الدخول + أزرار أدوات الفريق
+    # هنا واجهة HTML اللي فيها فورم تسجيل الدخول + أزرار أدوات الفريق
     return render_template("index.html")
 
 
@@ -172,7 +172,7 @@ def send_email_code(to_email: str, code: str, employee_name: str) -> None:
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.send_message(msg)
         logger.info("Login code sent to %s", to_email)
-    except Exception as e:
+    except Exception:
         logger.exception("SMTP error while sending code to %s", to_email)
         raise
 
@@ -182,15 +182,27 @@ def send_email_code(to_email: str, code: str, employee_name: str) -> None:
 # =====================
 @app.route("/api/login", methods=["POST"])
 def api_login():
-    # ⬅ هنا التعديل المهم
-    data = request.get_json(silent=True) or request.form or {}
-    email = (data.get("email") or "").strip().lower()
-    password = data.get("password") or ""
+    # نقرأ JSON بأمان حتى لو كان فاضي
+    data = request.get_json(silent=True) or {}
 
+    email_raw = (data.get("email") or "")
+    password_raw = (data.get("password") or "")
 
-    emp = EMPLOYEES.get(email)
+    # تنظيف
+    email = email_raw.strip().lower()
+    password = password_raw.strip()
+
+    logger.info("Login attempt: email=%r password_len=%d", email, len(password))
+
+    # ندوّر الموظف بدون ما نهتم بحالة الأحرف في الإيميل
+    emp = None
+    for k, v in EMPLOYEES.items():
+        if k.lower() == email:
+            emp = v
+            break
+
     if not emp or emp.get("password") != password:
-        logger.warning("Failed login attempt for email=%s", email)
+        logger.warning("Failed login attempt for email=%r", email)
         return jsonify(ok=False, message="بريد أو كلمة مرور غير صحيحة."), 401
 
     # نخلي السيشن دائم (يمشي مع app.permanent_session_lifetime)
@@ -225,6 +237,7 @@ def api_login():
     try:
         send_email_code(email, code, emp["name"])
     except Exception:
+        logger.exception("Failed to send login code to %s", email)
         return jsonify(ok=False, message="فشل إرسال الكود على الإيميل."), 500
 
     return jsonify(
@@ -289,7 +302,7 @@ def api_logout():
 
 
 if __name__ == "__main__":
+    # على Render يعطونك PORT في متغير البيئة
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-    port = int(os.getenv("PORT", "8000"))  # Railway يعطيك PORT من البيئة
+    port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
-
