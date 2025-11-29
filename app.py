@@ -77,7 +77,7 @@ EMPLOYEES = {
 
 
 # =========================
-# صفحة فحص حساب PSN بالفريق
+# صفحة فحص حساب PSN بالفريق (نسخة HTML تقليدية)
 # =========================
 @app.route("/tools/psn-check", methods=["GET", "POST"])
 def psn_check():
@@ -96,7 +96,7 @@ def psn_check():
                 if not DEMANTEAM_NPSSO or len(DEMANTEAM_NPSSO) < 40:
                     raise RuntimeError("NPSSO الخاص بالفريق غير مضبوط أو غير صالح.")
 
-                logger.info("Request PSN report for online_id=%s", online_id)
+                logger.info("Request PSN report (HTML) for online_id=%s", online_id)
                 data = get_account_report(online_id, DEMANTEAM_NPSSO)
 
                 if not isinstance(data, dict):
@@ -106,7 +106,7 @@ def psn_check():
                 else:
                     report = data
             except Exception:
-                logger.exception("Error while generating PSN report")
+                logger.exception("Error while generating PSN report (HTML)")
                 error = "حدث خطأ غير متوقع أثناء تحليل الحساب."
 
     return render_template("tools_psn_check.html", report=report, error=error)
@@ -212,6 +212,50 @@ def api_login():
 def api_verify_code():
     # بما إن الدخول مباشر، نخلي هذه النهاية ترجع رسالة واضحة
     return jsonify(ok=False, message="تم تفعيل الدخول المباشر بدون كود تحقق."), 400
+
+
+# =====================
+# API لتحليل حساب PSN (تتعامل معها الواجهة JS /api/psn-analyze)
+# =====================
+@app.route("/api/psn-analyze", methods=["POST"])
+def api_psn_analyze():
+    """
+    تستقبل Online ID وترجع تقرير PSN كـ JSON.
+    هذي اللي تستخدمها الواجهة الأمامية في الزر "تحليل الحساب الآن".
+    """
+    if not session.get("logged_in"):
+        return jsonify(ok=False, message="يجب تسجيل الدخول أولاً."), 401
+
+    data = request.get_json() or {}
+    online_id = (data.get("online_id") or "").strip()
+
+    if not online_id:
+        return jsonify(ok=False, message="رجاءً اكتب Online ID."), 400
+
+    if not DEMANTEAM_NPSSO or len(DEMANTEAM_NPSSO) < 40:
+        return jsonify(ok=False, message="NPSSO غير مضبوط أو غير صالح في الباك إند."), 500
+
+    try:
+        logger.info("API /api/psn-analyze for online_id=%s", online_id)
+        report = get_account_report(online_id, DEMANTEAM_NPSSO)
+
+        if not isinstance(report, dict):
+            return jsonify(ok=False, message="تعذر قراءة بيانات التقرير."), 500
+
+        # لو الدالة رجعت ok=False نخلي الرسالة تمر كما هي
+        if not report.get("ok", True):
+            # نخلي الواجهة تشوف الرسالة وتعرضها
+            return jsonify(report), 400
+
+        # نجاح: نرجع الدكت كامل
+        return jsonify(report), 200
+
+    except Exception:
+        logger.exception("Error in /api/psn-analyze")
+        return jsonify(
+            ok=False,
+            message="حدث خطأ غير متوقع أثناء تحليل الحساب."
+        ), 500
 
 
 @app.route("/api/logout", methods=["POST"])
